@@ -1,0 +1,560 @@
+blueprint:
+  name: "SmInt Reader Session Handler v2 (bis zu 10 Karten, bis zu 10 Zusatzsensoren)"
+  description: >
+    Erweiterte Version von tagreader_reader_session_handler.yaml: unterstützt
+    bis zu 10 Karten-Slots und bis zu 10 optionale Zusatzsensoren pro Reader.
+    Karte 1 ist Pflicht, alles weitere (Karte 2-10, alle Zusatzsensoren) ist
+    optional - einfach leer lassen, was nicht gebraucht wird.
+
+    Zusatzsensoren: wird ein "Meter-Entity" angegeben, verhält sich der Sensor
+    wie der primäre kWh-Sensor (beim Einchecken auf 0 kalibrieren, beim
+    Auschecken aufaddieren). Bleibt das Meter-Feld leer, wird stattdessen der
+    aktuelle Wert der Werte-Entity beim Auschecken 1:1 übernommen (Passthrough,
+    z.B. für vorberechnete Gas-/Wasserverbrauchssensoren).
+  domain: automation
+
+  input:
+    # --- Allgemein / primärer Sensor ---
+    display_text:
+      name: Display Input Text (dieser Reader)
+      selector:
+        entity:
+          domain: input_text
+    esphome_in:
+      name: ESPHome IN Action
+      default: []
+      selector:
+        action: {}
+    esphome_out:
+      name: ESPHome OUT Action
+      default: []
+      selector:
+        action: {}
+    reader_id:
+      name: Reader ID (für MQTT Topic, z.B. tr_k_01_kwh)
+      default: "tr_k_01_kwh"
+      selector:
+        text: {}
+    sensor_name:
+      name: MQTT Sensor Name (primärer kWh-Sensor)
+      default: "05_Stromverbrauch (Reader)"
+      selector:
+        text: {}
+    unit_of_measurement:
+      name: Einheit (primärer Sensor)
+      default: "kWh"
+      selector:
+        text: {}
+    device_class:
+      name: Geräteklasse (primärer Sensor)
+      default: "energy"
+      selector:
+        text: {}
+
+    # --- Karte 1 (Pflicht) ---
+    karte1_section:
+      name: Karte 001
+      icon: mdi:card-account-details
+      collapsed: false
+      input:
+        tag1_boolean:
+          name: Tag 001 Boolean (Trigger)
+          selector: { entity: { domain: input_boolean } }
+        mc_tag1_boolean:
+          name: MC Tag 001 Boolean
+          selector: { entity: { domain: input_boolean } }
+        tag1_number:
+          name: Tag 001 kWh Speicher (input_number)
+          selector: { entity: { domain: input_number } }
+        tag1_meter:
+          name: Tag 001 Utility Meter (sensor)
+          selector: { entity: { domain: sensor } }
+        tag1_text:
+          name: Tag 001 Experiment Name (input_text)
+          selector: { entity: { domain: input_text } }
+        tag1_manufacturer:
+          name: Tag 001 Hersteller (Manufacturer)
+          default: "Karte 001"
+          selector: { text: {} }
+
+    # --- Karte 2 (optional) ---
+    karte2_section:
+      name: Karte 002 (optional)
+      icon: mdi:card-account-details
+      collapsed: false
+      input:
+        tag2_boolean:
+          name: Tag 002 Boolean (Trigger)
+          default: []
+          selector: { entity: { domain: input_boolean } }
+        mc_tag2_boolean:
+          name: MC Tag 002 Boolean
+          default: []
+          selector: { entity: { domain: input_boolean } }
+        tag2_number:
+          name: Tag 002 kWh Speicher (input_number)
+          default: []
+          selector: { entity: { domain: input_number } }
+        tag2_meter:
+          name: Tag 002 Utility Meter (sensor)
+          default: []
+          selector: { entity: { domain: sensor } }
+        tag2_text:
+          name: Tag 002 Experiment Name (input_text)
+          default: []
+          selector: { entity: { domain: input_text } }
+        tag2_manufacturer:
+          name: Tag 002 Hersteller (Manufacturer)
+          default: "Karte 002"
+          selector: { text: {} }
+
+    # --- Karte 3 (optional) ---
+    karte3_section:
+      name: Karte 003 (optional)
+      icon: mdi:card-account-details
+      collapsed: false
+      input:
+        tag3_boolean:
+          name: Tag 003 Boolean (Trigger)
+          default: []
+          selector: { entity: { domain: input_boolean } }
+        mc_tag3_boolean:
+          name: MC Tag 003 Boolean
+          default: []
+          selector: { entity: { domain: input_boolean } }
+        tag3_number:
+          name: Tag 003 kWh Speicher (input_number)
+          default: []
+          selector: { entity: { domain: input_number } }
+        tag3_meter:
+          name: Tag 003 Utility Meter (sensor)
+          default: []
+          selector: { entity: { domain: sensor } }
+        tag3_text:
+          name: Tag 003 Experiment Name (input_text)
+          default: []
+          selector: { entity: { domain: input_text } }
+        tag3_manufacturer:
+          name: Tag 003 Hersteller (Manufacturer)
+          default: "Karte 003"
+          selector: { text: {} }
+
+    # --- Karte 4-10 (optional, gleiches Schema) ---
+    karte4_section:
+      name: Karte 004 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag4_boolean: { name: Tag 004 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
+        mc_tag4_boolean: { name: MC Tag 004 Boolean, default: [], selector: { entity: { domain: input_boolean } } }
+        tag4_number: { name: Tag 004 kWh Speicher (input_number), default: [], selector: { entity: { domain: input_number } } }
+        tag4_meter: { name: Tag 004 Utility Meter (sensor), default: [], selector: { entity: { domain: sensor } } }
+        tag4_text: { name: Tag 004 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
+        tag4_manufacturer: { name: Tag 004 Hersteller (Manufacturer), default: "Karte 004", selector: { text: {} } }
+
+    karte5_section:
+      name: Karte 005 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag5_boolean: { name: Tag 005 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
+        mc_tag5_boolean: { name: MC Tag 005 Boolean, default: [], selector: { entity: { domain: input_boolean } } }
+        tag5_number: { name: Tag 005 kWh Speicher (input_number), default: [], selector: { entity: { domain: input_number } } }
+        tag5_meter: { name: Tag 005 Utility Meter (sensor), default: [], selector: { entity: { domain: sensor } } }
+        tag5_text: { name: Tag 005 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
+        tag5_manufacturer: { name: Tag 005 Hersteller (Manufacturer), default: "Karte 005", selector: { text: {} } }
+
+    karte6_section:
+      name: Karte 006 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag6_boolean: { name: Tag 006 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
+        mc_tag6_boolean: { name: MC Tag 006 Boolean, default: [], selector: { entity: { domain: input_boolean } } }
+        tag6_number: { name: Tag 006 kWh Speicher (input_number), default: [], selector: { entity: { domain: input_number } } }
+        tag6_meter: { name: Tag 006 Utility Meter (sensor), default: [], selector: { entity: { domain: sensor } } }
+        tag6_text: { name: Tag 006 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
+        tag6_manufacturer: { name: Tag 006 Hersteller (Manufacturer), default: "Karte 006", selector: { text: {} } }
+
+    karte7_section:
+      name: Karte 007 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag7_boolean: { name: Tag 007 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
+        mc_tag7_boolean: { name: MC Tag 007 Boolean, default: [], selector: { entity: { domain: input_boolean } } }
+        tag7_number: { name: Tag 007 kWh Speicher (input_number), default: [], selector: { entity: { domain: input_number } } }
+        tag7_meter: { name: Tag 007 Utility Meter (sensor), default: [], selector: { entity: { domain: sensor } } }
+        tag7_text: { name: Tag 007 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
+        tag7_manufacturer: { name: Tag 007 Hersteller (Manufacturer), default: "Karte 007", selector: { text: {} } }
+
+    karte8_section:
+      name: Karte 008 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag8_boolean: { name: Tag 008 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
+        mc_tag8_boolean: { name: MC Tag 008 Boolean, default: [], selector: { entity: { domain: input_boolean } } }
+        tag8_number: { name: Tag 008 kWh Speicher (input_number), default: [], selector: { entity: { domain: input_number } } }
+        tag8_meter: { name: Tag 008 Utility Meter (sensor), default: [], selector: { entity: { domain: sensor } } }
+        tag8_text: { name: Tag 008 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
+        tag8_manufacturer: { name: Tag 008 Hersteller (Manufacturer), default: "Karte 008", selector: { text: {} } }
+
+    karte9_section:
+      name: Karte 009 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag9_boolean: { name: Tag 009 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
+        mc_tag9_boolean: { name: MC Tag 009 Boolean, default: [], selector: { entity: { domain: input_boolean } } }
+        tag9_number: { name: Tag 009 kWh Speicher (input_number), default: [], selector: { entity: { domain: input_number } } }
+        tag9_meter: { name: Tag 009 Utility Meter (sensor), default: [], selector: { entity: { domain: sensor } } }
+        tag9_text: { name: Tag 009 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
+        tag9_manufacturer: { name: Tag 009 Hersteller (Manufacturer), default: "Karte 009", selector: { text: {} } }
+
+    karte10_section:
+      name: Karte 010 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag10_boolean: { name: Tag 010 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
+        mc_tag10_boolean: { name: MC Tag 010 Boolean, default: [], selector: { entity: { domain: input_boolean } } }
+        tag10_number: { name: Tag 010 kWh Speicher (input_number), default: [], selector: { entity: { domain: input_number } } }
+        tag10_meter: { name: Tag 010 Utility Meter (sensor), default: [], selector: { entity: { domain: sensor } } }
+        tag10_text: { name: Tag 010 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
+        tag10_manufacturer: { name: Tag 010 Hersteller (Manufacturer), default: "Karte 010", selector: { text: {} } }
+
+    # --- Zusatzsensoren 1-10 (alle optional) ---
+    extra1_section:
+      name: Zusatzsensor 1 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra1_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra1_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra1_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra1_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra1_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra1_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra2_section:
+      name: Zusatzsensor 2 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra2_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra2_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra2_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra2_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra2_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra2_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra3_section:
+      name: Zusatzsensor 3 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra3_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra3_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra3_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra3_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra3_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra3_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra4_section:
+      name: Zusatzsensor 4 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra4_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra4_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra4_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra4_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra4_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra4_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra5_section:
+      name: Zusatzsensor 5 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra5_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra5_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra5_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra5_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra5_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra5_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra6_section:
+      name: Zusatzsensor 6 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra6_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra6_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra6_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra6_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra6_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra6_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra7_section:
+      name: Zusatzsensor 7 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra7_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra7_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra7_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra7_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra7_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra7_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra8_section:
+      name: Zusatzsensor 8 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra8_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra8_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra8_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra8_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra8_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra8_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra9_section:
+      name: Zusatzsensor 9 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra9_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra9_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra9_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra9_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra9_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra9_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+    extra10_section:
+      name: Zusatzsensor 10 (optional)
+      icon: mdi:gauge
+      collapsed: true
+      input:
+        extra10_value_entity: { name: "Werte-Entity (sensor oder input_number)", default: [], selector: { entity: { domain: [sensor, input_number] } } }
+        extra10_meter_entity: { name: "Meter-Entity (optional - leer = Passthrough)", default: [], selector: { entity: { domain: sensor } } }
+        extra10_name: { name: "Anzeigename", default: "", selector: { text: {} } }
+        extra10_unit: { name: "Einheit", default: "", selector: { text: {} } }
+        extra10_device_class: { name: "Geräteklasse (optional)", default: "", selector: { text: {} } }
+        extra10_topic_id: { name: "Topic-ID (leer = Slot inaktiv)", default: "", selector: { text: {} } }
+
+mode: parallel
+
+trigger:
+  - platform: state
+    entity_id: !input tag1_boolean
+    id: "Tag1"
+  - platform: state
+    entity_id: !input tag2_boolean
+    id: "Tag2"
+  - platform: state
+    entity_id: !input tag3_boolean
+    id: "Tag3"
+  - platform: state
+    entity_id: !input tag4_boolean
+    id: "Tag4"
+  - platform: state
+    entity_id: !input tag5_boolean
+    id: "Tag5"
+  - platform: state
+    entity_id: !input tag6_boolean
+    id: "Tag6"
+  - platform: state
+    entity_id: !input tag7_boolean
+    id: "Tag7"
+  - platform: state
+    entity_id: !input tag8_boolean
+    id: "Tag8"
+  - platform: state
+    entity_id: !input tag9_boolean
+    id: "Tag9"
+  - platform: state
+    entity_id: !input tag10_boolean
+    id: "Tag10"
+
+condition: []
+
+action:
+  - variables:
+      reader_id_v: !input reader_id
+      sensor_name_v: !input sensor_name
+      uom_v: !input unit_of_measurement
+      d_class_v: !input device_class
+
+      tag_defs:
+        - { boolean: !input tag1_boolean, mc_boolean: !input mc_tag1_boolean, number: !input tag1_number, meter: !input tag1_meter, text: !input tag1_text, mfg: !input tag1_manufacturer, label: "001" }
+        - { boolean: !input tag2_boolean, mc_boolean: !input mc_tag2_boolean, number: !input tag2_number, meter: !input tag2_meter, text: !input tag2_text, mfg: !input tag2_manufacturer, label: "002" }
+        - { boolean: !input tag3_boolean, mc_boolean: !input mc_tag3_boolean, number: !input tag3_number, meter: !input tag3_meter, text: !input tag3_text, mfg: !input tag3_manufacturer, label: "003" }
+        - { boolean: !input tag4_boolean, mc_boolean: !input mc_tag4_boolean, number: !input tag4_number, meter: !input tag4_meter, text: !input tag4_text, mfg: !input tag4_manufacturer, label: "004" }
+        - { boolean: !input tag5_boolean, mc_boolean: !input mc_tag5_boolean, number: !input tag5_number, meter: !input tag5_meter, text: !input tag5_text, mfg: !input tag5_manufacturer, label: "005" }
+        - { boolean: !input tag6_boolean, mc_boolean: !input mc_tag6_boolean, number: !input tag6_number, meter: !input tag6_meter, text: !input tag6_text, mfg: !input tag6_manufacturer, label: "006" }
+        - { boolean: !input tag7_boolean, mc_boolean: !input mc_tag7_boolean, number: !input tag7_number, meter: !input tag7_meter, text: !input tag7_text, mfg: !input tag7_manufacturer, label: "007" }
+        - { boolean: !input tag8_boolean, mc_boolean: !input mc_tag8_boolean, number: !input tag8_number, meter: !input tag8_meter, text: !input tag8_text, mfg: !input tag8_manufacturer, label: "008" }
+        - { boolean: !input tag9_boolean, mc_boolean: !input mc_tag9_boolean, number: !input tag9_number, meter: !input tag9_meter, text: !input tag9_text, mfg: !input tag9_manufacturer, label: "009" }
+        - { boolean: !input tag10_boolean, mc_boolean: !input mc_tag10_boolean, number: !input tag10_number, meter: !input tag10_meter, text: !input tag10_text, mfg: !input tag10_manufacturer, label: "010" }
+
+      sensor_defs_raw:
+        - { value_entity: !input extra1_value_entity, meter_entity: !input extra1_meter_entity, name: !input extra1_name, unit: !input extra1_unit, device_class: !input extra1_device_class, topic_id: !input extra1_topic_id }
+        - { value_entity: !input extra2_value_entity, meter_entity: !input extra2_meter_entity, name: !input extra2_name, unit: !input extra2_unit, device_class: !input extra2_device_class, topic_id: !input extra2_topic_id }
+        - { value_entity: !input extra3_value_entity, meter_entity: !input extra3_meter_entity, name: !input extra3_name, unit: !input extra3_unit, device_class: !input extra3_device_class, topic_id: !input extra3_topic_id }
+        - { value_entity: !input extra4_value_entity, meter_entity: !input extra4_meter_entity, name: !input extra4_name, unit: !input extra4_unit, device_class: !input extra4_device_class, topic_id: !input extra4_topic_id }
+        - { value_entity: !input extra5_value_entity, meter_entity: !input extra5_meter_entity, name: !input extra5_name, unit: !input extra5_unit, device_class: !input extra5_device_class, topic_id: !input extra5_topic_id }
+        - { value_entity: !input extra6_value_entity, meter_entity: !input extra6_meter_entity, name: !input extra6_name, unit: !input extra6_unit, device_class: !input extra6_device_class, topic_id: !input extra6_topic_id }
+        - { value_entity: !input extra7_value_entity, meter_entity: !input extra7_meter_entity, name: !input extra7_name, unit: !input extra7_unit, device_class: !input extra7_device_class, topic_id: !input extra7_topic_id }
+        - { value_entity: !input extra8_value_entity, meter_entity: !input extra8_meter_entity, name: !input extra8_name, unit: !input extra8_unit, device_class: !input extra8_device_class, topic_id: !input extra8_topic_id }
+        - { value_entity: !input extra9_value_entity, meter_entity: !input extra9_meter_entity, name: !input extra9_name, unit: !input extra9_unit, device_class: !input extra9_device_class, topic_id: !input extra9_topic_id }
+        - { value_entity: !input extra10_value_entity, meter_entity: !input extra10_meter_entity, name: !input extra10_name, unit: !input extra10_unit, device_class: !input extra10_device_class, topic_id: !input extra10_topic_id }
+
+  - variables:
+      this_tag: "{{ tag_defs | selectattr('boolean', 'eq', trigger.entity_id) | first }}"
+      sensor_defs: "{{ sensor_defs_raw | selectattr('topic_id', 'ne', '') | list }}"
+
+  - choose:
+      # ==========================================
+      # EINCHECKEN (Tag-Boolean -> on)
+      # ==========================================
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'on' }}"
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ is_state(this_tag.mc_boolean, 'off') }}"
+            then:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: "{{ this_tag.mc_boolean }}"
+          - action: utility_meter.calibrate
+            target:
+              entity_id: "{{ this_tag.meter }}"
+            data:
+              value: 0
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(this_tag.text) }}/{{ reader_id_v }}/config"
+              payload: >-
+                {
+                  "name": "{{ sensor_name_v }}",
+                  "state_topic": "homeassistant/sensor/{{ states(this_tag.text) }}/{{ reader_id_v }}/state",
+                  "unit_of_measurement": "{{ uom_v }}",
+                  {% if d_class_v != "" %}
+                  "device_class": "{{ d_class_v }}",
+                  {% endif %}
+                  "state_class": "total",
+                  "unique_id": "{{ states(this_tag.text) }}_{{ reader_id_v }}",
+                  "device": {
+                    "identifiers": ["{{ states(this_tag.text) }}"],
+                    "name": "{{ states(this_tag.text) }}",
+                    "manufacturer": "{{ this_tag.mfg }}",
+                    "model": "SmInt",
+                    "model_id": "test123",
+                    "serial_number": "12345",
+                    "hw_version": "1.0",
+                    "sw_version": "2105.1.0",
+                    "configuration_url": "https://example.com/experiment_config"
+                  }
+                }
+              qos: 0
+              retain: true
+
+          - repeat:
+              for_each: "{{ sensor_defs }}"
+              sequence:
+                - if:
+                    - condition: template
+                      value_template: "{{ repeat.item.meter_entity != [] }}"
+                  then:
+                    - action: utility_meter.calibrate
+                      target:
+                        entity_id: "{{ repeat.item.meter_entity }}"
+                      data:
+                        value: 0
+                - action: mqtt.publish
+                  data:
+                    topic: "homeassistant/sensor/{{ states(this_tag.text) }}/{{ repeat.item.topic_id }}/config"
+                    payload: >-
+                      {
+                        "name": "{{ repeat.item.name }}",
+                        "state_topic": "homeassistant/sensor/{{ states(this_tag.text) }}/{{ repeat.item.topic_id }}/state",
+                        "unit_of_measurement": "{{ repeat.item.unit }}",
+                        {% if repeat.item.device_class != "" %}
+                        "device_class": "{{ repeat.item.device_class }}",
+                        {% endif %}
+                        "unique_id": "{{ states(this_tag.text) }}_{{ repeat.item.topic_id }}",
+                        "device": { "identifiers": ["{{ states(this_tag.text) }}"] }
+                      }
+                    qos: 0
+                    retain: true
+
+          - sequence: !input esphome_in
+
+      # ==========================================
+      # AUSCHECKEN (Tag-Boolean -> off)
+      # ==========================================
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.state == 'off' }}"
+        sequence:
+          - action: input_number.set_value
+            target:
+              entity_id: "{{ this_tag.number }}"
+            data:
+              value: >
+                {{ states(this_tag.number) | float(0) + states(this_tag.meter) | float(0) }}
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(this_tag.text) }}/{{ reader_id_v }}/state"
+              payload: "{{ states(this_tag.number) }}"
+              qos: 0
+              retain: true
+
+          - repeat:
+              for_each: "{{ sensor_defs }}"
+              sequence:
+                - if:
+                    - condition: template
+                      value_template: "{{ repeat.item.meter_entity != [] }}"
+                  then:
+                    - action: input_number.set_value
+                      target:
+                        entity_id: "{{ repeat.item.value_entity }}"
+                      data:
+                        value: >
+                          {{ states(repeat.item.value_entity) | float(0) + states(repeat.item.meter_entity) | float(0) }}
+                - delay: { seconds: 1 }
+                - action: mqtt.publish
+                  data:
+                    topic: "homeassistant/sensor/{{ states(this_tag.text) }}/{{ repeat.item.topic_id }}/state"
+                    payload: "{{ states(repeat.item.value_entity) }}"
+                    qos: 0
+                    retain: true
+
+          - sequence: !input esphome_out
+
+  # ==========================================
+  # DISPLAY UPDATE (läuft immer danach, für alle 10 Slots)
+  # ==========================================
+  - service: input_text.set_value
+    target:
+      entity_id: !input display_text
+    data:
+      value: >-
+        {% set ns = namespace(logged_in=[]) %}
+        {% for t in tag_defs %}
+          {% if t.boolean and is_state(t.boolean, 'on') %}
+            {% set ns.logged_in = ns.logged_in + [t.label] %}
+          {% endif %}
+        {% endfor %}
+        {% if ns.logged_in | length == 0 %}
+          Bitte Karte scannen!
+        {% else %}
+          Karten eingeloggt: {{ ns.logged_in | join(', ') }}
+        {% endif %}
