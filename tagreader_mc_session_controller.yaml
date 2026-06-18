@@ -230,6 +230,22 @@ action:
           - condition: trigger
             id: "Tag1_OFF"
         sequence:
+          - if:
+              - condition: state
+                entity_id: !input r1_tag1_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r1_tag1_boolean }
+          - if:
+              - condition: state
+                entity_id: !input r2_tag1_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r2_tag1_boolean }
+          - delay: { seconds: 1 }
+
           - action: mqtt.publish
             data:
               topic: "homeassistant/sensor/{{ states(tag1_txt) }}/end_time/config"
@@ -291,21 +307,6 @@ action:
               topic: "homeassistant/sensor/{{ states(tag1_txt) }}/co2_{{ sid }}/state"
               payload: "{{ states(tag1_co2) }}"
               retain: true
-
-          - if:
-              - condition: state
-                entity_id: !input r1_tag1_boolean
-                state: "on"
-            then:
-              - action: input_boolean.turn_off
-                target: { entity_id: !input r1_tag1_boolean }
-          - if:
-              - condition: state
-                entity_id: !input r2_tag1_boolean
-                state: "on"
-            then:
-              - action: input_boolean.turn_off
-                target: { entity_id: !input r2_tag1_boolean }
 
           - sequence: !input esphome_out_action
 
@@ -374,6 +375,22 @@ action:
           - condition: trigger
             id: "Tag2_OFF"
         sequence:
+          - if:
+              - condition: state
+                entity_id: !input r1_tag2_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r1_tag2_boolean }
+          - if:
+              - condition: state
+                entity_id: !input r2_tag2_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r2_tag2_boolean }
+          - delay: { seconds: 1 }
+
           - action: mqtt.publish
             data:
               topic: "homeassistant/sensor/{{ states(tag2_txt) }}/end_time/config"
@@ -435,21 +452,6 @@ action:
               topic: "homeassistant/sensor/{{ states(tag2_txt) }}/co2_{{ sid }}/state"
               payload: "{{ states(tag2_co2) }}"
               retain: true
-
-          - if:
-              - condition: state
-                entity_id: !input r1_tag2_boolean
-                state: "on"
-            then:
-              - action: input_boolean.turn_off
-                target: { entity_id: !input r1_tag2_boolean }
-          - if:
-              - condition: state
-                entity_id: !input r2_tag2_boolean
-                state: "on"
-            then:
-              - action: input_boolean.turn_off
-                target: { entity_id: !input r2_tag2_boolean }
 
           - sequence: !input esphome_out_action
 
@@ -518,6 +520,22 @@ action:
           - condition: trigger
             id: "Tag3_OFF"
         sequence:
+          - if:
+              - condition: state
+                entity_id: !input r1_tag3_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r1_tag3_boolean }
+          - if:
+              - condition: state
+                entity_id: !input r2_tag3_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r2_tag3_boolean }
+          - delay: { seconds: 1 }
+
           - action: mqtt.publish
             data:
               topic: "homeassistant/sensor/{{ states(tag3_txt) }}/end_time/config"
@@ -579,21 +597,6 @@ action:
               topic: "homeassistant/sensor/{{ states(tag3_txt) }}/co2_{{ sid }}/state"
               payload: "{{ states(tag3_co2) }}"
               retain: true
-
-          - if:
-              - condition: state
-                entity_id: !input r1_tag3_boolean
-                state: "on"
-            then:
-              - action: input_boolean.turn_off
-                target: { entity_id: !input r1_tag3_boolean }
-          - if:
-              - condition: state
-                entity_id: !input r2_tag3_boolean
-                state: "on"
-            then:
-              - action: input_boolean.turn_off
-                target: { entity_id: !input r2_tag3_boolean }
 
           - sequence: !input esphome_out_action
 
