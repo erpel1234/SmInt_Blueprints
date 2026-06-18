@@ -1,0 +1,403 @@
+blueprint:
+  name: "SmInt Reader Session Handler"
+  description: >
+    Ersetzt tagreader_smint.yaml + tagreader_device_creation.yaml für einen
+    einzelnen Stations-Reader (z.B. TR-K-01). 1x pro Reader instanziieren.
+
+    Bei Tag-Boolean ON: MC-Boolean einschalten falls aus, Utility-Meter
+    kalibrieren, MQTT-Discovery-Sensor publizieren, ESPHome IN.
+    Bei Tag-Boolean OFF: Meter-Wert aufaddieren, MQTT-State publizieren,
+    ESPHome OUT. Danach Display immer neu berechnen.
+  domain: automation
+
+  input:
+    # --- Allgemein / MQTT-Geräte-Metadaten ---
+    display_text:
+      name: Display Input Text (dieser Reader)
+      selector:
+        entity:
+          domain: input_text
+    esphome_in:
+      name: ESPHome IN Action
+      default: []
+      selector:
+        action: {}
+    esphome_out:
+      name: ESPHome OUT Action
+      default: []
+      selector:
+        action: {}
+    reader_id:
+      name: Reader ID (für MQTT Topic, z.B. tr_k_01_kwh)
+      default: "tr_k_01_kwh"
+      selector:
+        text: {}
+    sensor_name:
+      name: MQTT Sensor Name
+      default: "05_Stromverbrauch (Reader)"
+      selector:
+        text: {}
+    unit_of_measurement:
+      name: Einheit (Unit of Measurement)
+      default: "kWh"
+      selector:
+        text: {}
+    device_class:
+      name: Geräteklasse (Device Class)
+      default: "energy"
+      selector:
+        text: {}
+    manufacturer:
+      name: Hersteller (Manufacturer)
+      default: "Karte 001"
+      selector:
+        text: {}
+
+    # --- TAG 1 ---
+    tag1_boolean:
+      name: Tag 001 Boolean (Trigger)
+      selector: { entity: { domain: input_boolean } }
+    mc_tag1_boolean:
+      name: MC Tag 001 Boolean
+      selector: { entity: { domain: input_boolean } }
+    tag1_number:
+      name: Tag 001 kWh Speicher (input_number)
+      selector: { entity: { domain: input_number } }
+    tag1_meter:
+      name: Tag 001 Utility Meter (sensor)
+      selector: { entity: { domain: sensor } }
+    tag1_text:
+      name: Tag 001 Experiment Name (input_text)
+      selector: { entity: { domain: input_text } }
+
+    # --- TAG 2 ---
+    tag2_boolean:
+      name: Tag 002 Boolean (Trigger)
+      selector: { entity: { domain: input_boolean } }
+    mc_tag2_boolean:
+      name: MC Tag 002 Boolean
+      selector: { entity: { domain: input_boolean } }
+    tag2_number:
+      name: Tag 002 kWh Speicher (input_number)
+      selector: { entity: { domain: input_number } }
+    tag2_meter:
+      name: Tag 002 Utility Meter (sensor)
+      selector: { entity: { domain: sensor } }
+    tag2_text:
+      name: Tag 002 Experiment Name (input_text)
+      selector: { entity: { domain: input_text } }
+
+    # --- TAG 3 ---
+    tag3_boolean:
+      name: Tag 003 Boolean (Trigger)
+      selector: { entity: { domain: input_boolean } }
+    mc_tag3_boolean:
+      name: MC Tag 003 Boolean
+      selector: { entity: { domain: input_boolean } }
+    tag3_number:
+      name: Tag 003 kWh Speicher (input_number)
+      selector: { entity: { domain: input_number } }
+    tag3_meter:
+      name: Tag 003 Utility Meter (sensor)
+      selector: { entity: { domain: sensor } }
+    tag3_text:
+      name: Tag 003 Experiment Name (input_text)
+      selector: { entity: { domain: input_text } }
+
+mode: parallel
+
+trigger:
+  - platform: state
+    entity_id: !input tag1_boolean
+    id: Tag001
+  - platform: state
+    entity_id: !input tag2_boolean
+    id: Tag002
+  - platform: state
+    entity_id: !input tag3_boolean
+    id: Tag003
+
+condition: []
+
+action:
+  - variables:
+      reader_id_v: !input reader_id
+      sensor_name_v: !input sensor_name
+      uom_v: !input unit_of_measurement
+      d_class_v: !input device_class
+      mfg_v: !input manufacturer
+
+  - choose:
+      # --------------------
+      # TAG1 ON
+      # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag001
+          - condition: state
+            entity_id: !input tag1_boolean
+            state: "on"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input mc_tag1_boolean
+                state: "off"
+            then:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: !input mc_tag1_boolean
+          - action: utility_meter.calibrate
+            target:
+              entity_id: !input tag1_meter
+            data:
+              value: 0
+          - variables:
+              tag1_text_entity: !input tag1_text
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(tag1_text_entity) }}/{{ reader_id_v }}/config"
+              payload: >-
+                {
+                  "name": "{{ sensor_name_v }}",
+                  "state_topic": "homeassistant/sensor/{{ states(tag1_text_entity) }}/{{ reader_id_v }}/state",
+                  "unit_of_measurement": "{{ uom_v }}",
+                  {% if d_class_v != "" %}
+                  "device_class": "{{ d_class_v }}",
+                  {% endif %}
+                  "state_class": "total",
+                  "unique_id": "{{ states(tag1_text_entity) }}_{{ reader_id_v }}",
+                  "device": {
+                    "identifiers": ["{{ states(tag1_text_entity) }}"],
+                    "name": "{{ states(tag1_text_entity) }}",
+                    "manufacturer": "{{ mfg_v }}",
+                    "model": "SmInt",
+                    "model_id": "test123",
+                    "serial_number": "12345",
+                    "hw_version": "1.0",
+                    "sw_version": "2105.1.0",
+                    "configuration_url": "https://example.com/experiment_config"
+                  }
+                }
+              qos: 0
+              retain: true
+          - sequence: !input esphome_in
+
+      # --------------------
+      # TAG1 OFF
+      # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag001
+          - condition: state
+            entity_id: !input tag1_boolean
+            state: "off"
+        sequence:
+          - variables:
+              tag1_number_entity: !input tag1_number
+              tag1_meter_entity: !input tag1_meter
+              tag1_text_entity: !input tag1_text
+          - service: input_number.set_value
+            target:
+              entity_id: !input tag1_number
+            data:
+              value: >
+                {{ states(tag1_number_entity) | float(0) + states(tag1_meter_entity) | float(0) }}
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(tag1_text_entity) }}/{{ reader_id_v }}/state"
+              payload: "{{ states(tag1_number_entity) }}"
+              qos: 0
+              retain: true
+          - sequence: !input esphome_out
+
+      # --------------------
+      # TAG2 ON
+      # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag002
+          - condition: state
+            entity_id: !input tag2_boolean
+            state: "on"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input mc_tag2_boolean
+                state: "off"
+            then:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: !input mc_tag2_boolean
+          - action: utility_meter.calibrate
+            target:
+              entity_id: !input tag2_meter
+            data:
+              value: 0
+          - variables:
+              tag2_text_entity: !input tag2_text
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(tag2_text_entity) }}/{{ reader_id_v }}/config"
+              payload: >-
+                {
+                  "name": "{{ sensor_name_v }}",
+                  "state_topic": "homeassistant/sensor/{{ states(tag2_text_entity) }}/{{ reader_id_v }}/state",
+                  "unit_of_measurement": "{{ uom_v }}",
+                  {% if d_class_v != "" %}
+                  "device_class": "{{ d_class_v }}",
+                  {% endif %}
+                  "state_class": "total",
+                  "unique_id": "{{ states(tag2_text_entity) }}_{{ reader_id_v }}",
+                  "device": {
+                    "identifiers": ["{{ states(tag2_text_entity) }}"],
+                    "name": "{{ states(tag2_text_entity) }}",
+                    "manufacturer": "{{ mfg_v }}",
+                    "model": "SmInt",
+                    "model_id": "test123",
+                    "serial_number": "12345",
+                    "hw_version": "1.0",
+                    "sw_version": "2105.1.0",
+                    "configuration_url": "https://example.com/experiment_config"
+                  }
+                }
+              qos: 0
+              retain: true
+          - sequence: !input esphome_in
+
+      # --------------------
+      # TAG2 OFF
+      # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag002
+          - condition: state
+            entity_id: !input tag2_boolean
+            state: "off"
+        sequence:
+          - variables:
+              tag2_number_entity: !input tag2_number
+              tag2_meter_entity: !input tag2_meter
+              tag2_text_entity: !input tag2_text
+          - service: input_number.set_value
+            target:
+              entity_id: !input tag2_number
+            data:
+              value: >
+                {{ states(tag2_number_entity) | float(0) + states(tag2_meter_entity) | float(0) }}
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(tag2_text_entity) }}/{{ reader_id_v }}/state"
+              payload: "{{ states(tag2_number_entity) }}"
+              qos: 0
+              retain: true
+          - sequence: !input esphome_out
+
+      # --------------------
+      # TAG3 ON
+      # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag003
+          - condition: state
+            entity_id: !input tag3_boolean
+            state: "on"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input mc_tag3_boolean
+                state: "off"
+            then:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: !input mc_tag3_boolean
+          - action: utility_meter.calibrate
+            target:
+              entity_id: !input tag3_meter
+            data:
+              value: 0
+          - variables:
+              tag3_text_entity: !input tag3_text
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(tag3_text_entity) }}/{{ reader_id_v }}/config"
+              payload: >-
+                {
+                  "name": "{{ sensor_name_v }}",
+                  "state_topic": "homeassistant/sensor/{{ states(tag3_text_entity) }}/{{ reader_id_v }}/state",
+                  "unit_of_measurement": "{{ uom_v }}",
+                  {% if d_class_v != "" %}
+                  "device_class": "{{ d_class_v }}",
+                  {% endif %}
+                  "state_class": "total",
+                  "unique_id": "{{ states(tag3_text_entity) }}_{{ reader_id_v }}",
+                  "device": {
+                    "identifiers": ["{{ states(tag3_text_entity) }}"],
+                    "name": "{{ states(tag3_text_entity) }}",
+                    "manufacturer": "{{ mfg_v }}",
+                    "model": "SmInt",
+                    "model_id": "test123",
+                    "serial_number": "12345",
+                    "hw_version": "1.0",
+                    "sw_version": "2105.1.0",
+                    "configuration_url": "https://example.com/experiment_config"
+                  }
+                }
+              qos: 0
+              retain: true
+          - sequence: !input esphome_in
+
+      # --------------------
+      # TAG3 OFF
+      # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag003
+          - condition: state
+            entity_id: !input tag3_boolean
+            state: "off"
+        sequence:
+          - variables:
+              tag3_number_entity: !input tag3_number
+              tag3_meter_entity: !input tag3_meter
+              tag3_text_entity: !input tag3_text
+          - service: input_number.set_value
+            target:
+              entity_id: !input tag3_number
+            data:
+              value: >
+                {{ states(tag3_number_entity) | float(0) + states(tag3_meter_entity) | float(0) }}
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(tag3_text_entity) }}/{{ reader_id_v }}/state"
+              payload: "{{ states(tag3_number_entity) }}"
+              qos: 0
+              retain: true
+          - sequence: !input esphome_out
+
+  # ==========================================
+  # DISPLAY UPDATE (läuft IMMER danach)
+  # ==========================================
+  - variables:
+      tag1_entity: !input tag1_boolean
+      tag2_entity: !input tag2_boolean
+      tag3_entity: !input tag3_boolean
+
+  - service: input_text.set_value
+    target:
+      entity_id: !input display_text
+    data:
+      value: >-
+        {% set tags = [
+          '001' if is_state(tag1_entity, 'on') else '',
+          '002' if is_state(tag2_entity, 'on') else '',
+          '003' if is_state(tag3_entity, 'on') else ''
+        ] | reject('equalto','') | list %}
+
+        {% if tags | length == 0 %}
+          Bitte Karte scannen!
+        {% else %}
+          Karten eingeloggt: {{ tags | join(', ') }}
+        {% endif %}

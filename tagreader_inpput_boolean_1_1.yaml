@@ -1,0 +1,361 @@
+blueprint:
+  name: Tag Reader → Input Boolean Toggle 1_1
+  description: >
+    Diese Automation schaltet (toggle) unterschiedliche input_booleans,
+    abhängig davon, welcher Tag (UID) von welchem Tag-Reader erkannt wurde.
+    
+    Vorgehensweise:
+    1. Trage unten die UID deiner Tags ein.
+    2. Wähle die jeweiligen Reader-Sensoren aus.
+    3. Ordne jedem Tag pro Reader ein input_boolean zu.
+    
+    Wenn ein bestimmter Tag an einem bestimmten Reader erkannt wird,
+    wird das zugewiesene input_boolean umgeschaltet (AN/AUS).
+
+  domain: automation
+
+  input:
+
+    uid_section:
+      name: UID Konfiguration
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag_1_uid:
+          name: Tag 1 UID
+          description: >
+            Trage hier die exakte UID deines ersten Tags ein.
+            Die UID muss exakt dem Sensorwert entsprechen,
+            den dein Tag-Reader liefert.
+            
+            Beispiel:
+            04A224B91C2A80
+          default:
+          selector:
+            text:
+
+        tag_2_uid:
+          name: Tag 2 UID
+          description: >
+            Trage hier die UID deines zweiten Tags ein.
+            Die UID findest du im Zustand (State) des Tag-Reader-Sensors,
+            nachdem der Tag gescannt wurde.
+          default:
+          selector:
+            text:
+
+        tag_3_uid:
+          name: Tag 3 UID
+          description: >
+            Trage hier die UID deines dritten Tags ein.
+            Achte darauf, dass keine Leerzeichen enthalten sind
+            und Groß-/Kleinschreibung exakt passt.
+          default:
+          selector:
+            text:
+
+    name_reader_mc:
+      name: Reader MC Konfiguration (nur zur Orientierung)
+      description: >
+        Dieser Name dient nur deiner Übersicht.
+        Er wird nicht automatisch im Abschnittstitel angezeigt.
+
+    readermc_section:
+      name: Konfiguration
+      icon: mdi:toggle-switch
+      collapsed: true
+      input:
+
+        reader_mc:
+          name: Tag Reader MC Sensor
+          description: >
+            Wähle hier den Sensor deines MC-Readers aus.
+            
+            Wichtig:
+            Der Sensor muss beim Scannen eines Tags als Zustand (State)
+            die UID des Tags liefern.
+          default: []
+          selector:
+            entity:
+              filter:
+              - domain: 
+                - sensor
+              multiple: false
+
+        mc_tag1_boolean:
+          name: Reader MC → Tag 1 Boolean
+          description: >
+            Wähle hier das input_boolean, das umgeschaltet werden soll,
+            wenn Reader MC Tag 1 erkennt.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        mc_tag2_boolean:
+          name: Reader MC → Tag 2 Boolean
+          description: >
+            Wähle hier das input_boolean für Tag 2 an Reader MC.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        mc_tag3_boolean:
+          name: Reader MC → Tag 3 Boolean
+          description: >
+            Wähle hier das input_boolean für Tag 3 an Reader MC.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+    name_reader_1:
+      name: Reader 1 Konfiguration (nur zur Orientierung)
+      description: >
+        Dieser Name dient nur deiner Übersicht.
+        Er wird nicht automatisch im Abschnittstitel angezeigt.
+
+    reader1_section:
+      name: Konfiguration
+      icon: mdi:toggle-switch
+      collapsed: true
+      input:
+
+        reader_1:
+          name: Tag Reader 1 Sensor
+          description: >
+            Wähle hier den Sensor deines ersten Tag-Readers aus.
+            
+            Wichtig:
+            Der Sensor muss beim Scannen eines Tags als Zustand (State)
+            die UID des Tags liefern.
+          default: []
+          selector:
+            entity:
+              filter:
+              - domain: 
+                - sensor
+              multiple: false
+
+        r1_tag1_boolean:
+          name: Reader 1 → Tag 1 Boolean
+          description: >
+            Wähle hier das input_boolean, das umgeschaltet werden soll,
+            wenn Reader 1 Tag 1 erkennt.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        r1_tag2_boolean:
+          name: Reader 1 → Tag 2 Boolean
+          description: >
+            Wähle hier das input_boolean für Tag 2 an Reader 1.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        r1_tag3_boolean:
+          name: Reader 1 → Tag 3 Boolean
+          description: >
+            Wähle hier das input_boolean für Tag 3 an Reader 1.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+    name_reader_2:
+      name: Reader 2 Konfiguration (nur zur Orientierung)
+      description: >
+        Dieser Name dient nur deiner Übersicht.
+        Er wird nicht automatisch im Abschnittstitel angezeigt.
+
+    reader2_section:
+      name: Konfiguration
+      icon: mdi:toggle-switch
+      collapsed: true
+      input:
+
+        reader_2:
+          name: Tag Reader 2 Sensor
+          description: >
+            Wähle hier den Sensor deines zweiten Tag-Readers aus.
+            
+            Auch dieser Sensor muss beim Scannen die UID
+            als Zustand ausgeben.
+          default: []
+          selector:
+            entity:
+              filter:
+              - domain: 
+                - sensor
+              multiple: false
+
+        r2_tag1_boolean:
+          name: Reader 2 → Tag 1 Boolean
+          description: >
+            Dieses input_boolean wird umgeschaltet,
+            wenn Reader 2 Tag 1 erkennt.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        r2_tag2_boolean:
+          name: Reader 2 → Tag 2 Boolean
+          description: >
+            Dieses input_boolean wird umgeschaltet,
+            wenn Reader 2 Tag 2 erkennt.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+        r2_tag3_boolean:
+          name: Reader 2 → Tag 3 Boolean
+          description: >
+            Dieses input_boolean wird umgeschaltet,
+            wenn Reader 2 Tag 3 erkennt.
+          default:
+          selector:
+            entity:
+              filter:
+                - domain: input_boolean
+
+mode: queued
+
+trigger:
+  - platform: state
+    entity_id: !input reader_mc
+    id: readermc
+
+  - platform: state
+    entity_id: !input reader_1
+    id: reader1
+
+  - platform: state
+    entity_id: !input reader_2
+    id: reader2
+
+condition: []
+
+action:
+  - variables:
+      tag1: !input tag_1_uid
+      tag2: !input tag_2_uid
+      tag3: !input tag_3_uid
+
+  - choose:
+
+      # =========================
+      # READER MC
+      # =========================
+
+      - conditions:
+          - condition: trigger
+            id: readermc
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag1 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input mc_tag1_boolean
+
+      - conditions:
+          - condition: trigger
+            id: readermc
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag2 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input mc_tag2_boolean
+
+      - conditions:
+          - condition: trigger
+            id: readermc
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag3 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input mc_tag3_boolean
+
+      # =========================
+      # READER 1
+      # =========================
+
+      - conditions:
+          - condition: trigger
+            id: reader1
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag1 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input r1_tag1_boolean
+
+      - conditions:
+          - condition: trigger
+            id: reader1
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag2 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input r1_tag2_boolean
+
+      - conditions:
+          - condition: trigger
+            id: reader1
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag3 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input r1_tag3_boolean
+
+
+      # =========================
+      # READER 2
+      # =========================
+
+      - conditions:
+          - condition: trigger
+            id: reader2
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag1 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input r2_tag1_boolean
+
+      - conditions:
+          - condition: trigger
+            id: reader2
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag2 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input r2_tag2_boolean
+
+      - conditions:
+          - condition: trigger
+            id: reader2
+          - condition: template
+            value_template: "{{ trigger.to_state.state == tag3 }}"
+        sequence:
+          - action: input_boolean.toggle
+            target:
+              entity_id: !input r2_tag3_boolean

@@ -1,0 +1,449 @@
+blueprint:
+  name: "SmInt MC MQTT Publisher (Time, Energy & CO2)"
+  description: "Setzt Startzeit (ON), Endzeit (OFF) und pusht CO2- sowie kWh-Werte via MQTT. Führt vorher generische Skripte und ESPHome-Aktionen aus."
+  domain: automation
+
+  input:
+    # --- Allgemeine Konfiguration ---
+    station_id:
+      name: Station ID (z.B. für kwh_001)
+      description: "Suffix, das an die Sensoren gehängt wird (z.B. '001', '002' für kwh_001 / co2_001)"
+      default: "001"
+      selector:
+        text: {}
+    manufacturer:
+      name: Hersteller (Manufacturer)
+      default: "SmInt"
+      selector:
+        text: {}
+    esphome_in_action:
+      name: ESPHome Action (IN)
+      description: "Wird am Ende jedes Checkout-Vorgangs aufgerufen (z.B. esphome.mc_k_01_in)"
+      default: []
+      selector:
+        action: {}
+
+    # --- TAG 1 ---
+    t1_trigger:
+      name: Tag 1 MC Boolean (Trigger)
+      selector: { entity: { domain: input_boolean } }
+    t1_text:
+      name: Tag 1 Experiment Speicher (input_text) Bsp:("Output Experiment Tag001")
+      selector: { entity: { domain: input_text } }
+    t1_kwh_sensor:
+      name: Tag 1 Finaler kWh Sensor (sensor.final_kwh_tag...)
+      selector: { entity: { domain: sensor } }
+    t1_co2_sensor:
+      name: Tag 1 Finaler CO2 Sensor (sensor.final_co2_tag...)
+      selector: { entity: { domain: sensor } }
+    t1_script:
+      name: Tag 1 Name Generator Script (Optional)
+      default: []
+      selector: { action: {} }
+
+    # --- TAG 2 ---
+    t2_trigger:
+      name: Tag 2 MC Boolean (Trigger)
+      selector: { entity: { domain: input_boolean } }
+    t2_text:
+      name: Tag 2 Experiment Speicher (input_text) Bsp:("Output Experiment Tag001")
+      selector: { entity: { domain: input_text } }
+    t2_kwh_sensor:
+      name: Tag 2 Finaler kWh Sensor (sensor.final_kwh_tag...)
+      selector: { entity: { domain: sensor } }
+    t2_co2_sensor:
+      name: Tag 2 Finaler CO2 Sensor (sensor.final_co2_tag...)
+      selector: { entity: { domain: sensor } }
+    t2_script:
+      name: Tag 2 Name Generator Script (Optional)
+      default: []
+      selector: { action: {} }
+
+    # --- TAG 3 ---
+    t3_trigger:
+      name: Tag 3 MC Boolean (Trigger)
+      selector: { entity: { domain: input_boolean } }
+    t3_text:
+      name: Tag 3 Experiment Speicher (input_text) Bsp:("Output Experiment Tag001")
+      selector: { entity: { domain: input_text } }
+    t3_kwh_sensor:
+      name: Tag 3 Finaler kWh Sensor (sensor.final_kwh_tag...)
+      selector: { entity: { domain: sensor } }
+    t3_co2_sensor:
+      name: Tag 3 Finaler CO2 Sensor (sensor.final_co2_tag...)
+      selector: { entity: { domain: sensor } }
+    t3_script:
+      name: Tag 3 Name Generator Script (Optional)
+      default: []
+      selector: { action: {} }
+
+
+mode: parallel
+
+trigger:
+  - platform: state
+    entity_id: !input t1_trigger
+    from: "off"
+    to: "on"
+    id: "T1_ON"
+  - platform: state
+    entity_id: !input t1_trigger
+    from: "on"
+    to: "off"
+    id: "T1_OFF"
+  - platform: state
+    entity_id: !input t2_trigger
+    from: "off"
+    to: "on"
+    id: "T2_ON"
+  - platform: state
+    entity_id: !input t2_trigger
+    from: "on"
+    to: "off"
+    id: "T2_OFF"
+  - platform: state
+    entity_id: !input t3_trigger
+    from: "off"
+    to: "on"
+    id: "T3_ON"
+  - platform: state
+    entity_id: !input t3_trigger
+    from: "on"
+    to: "off"
+    id: "T3_OFF"
+
+action:
+  - variables:
+      sid: !input station_id
+      mfg: !input manufacturer
+      t1_txt: !input t1_text
+      t1_kwh: !input t1_kwh_sensor
+      t1_co2: !input t1_co2_sensor
+      t2_txt: !input t2_text
+      t2_kwh: !input t2_kwh_sensor
+      t2_co2: !input t2_co2_sensor
+      t3_txt: !input t3_text
+      t3_kwh: !input t3_kwh_sensor
+      t3_co2: !input t3_co2_sensor
+
+  - choose:
+      # ==========================================
+      # TAG 1 - ON (Start Time)
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: "T1_ON"
+        sequence:
+          - choose: []
+            default: !input t1_script
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t1_txt) }}/start_time/config"
+              payload: >-
+                {
+                  "name": "01_Startzeitpunkt",
+                  "state_topic": "homeassistant/sensor/{{ states(t1_txt) }}/start_time/state",
+                  "unit_of_measurement": "",
+                  "unique_id": "{{ states(t1_txt) }}_start_time",
+                  "device_class": "timestamp",
+                  "device": {
+                    "identifiers": ["{{ states(t1_txt) }}"],
+                    "name": "{{ states(t1_txt) }}",
+                    "manufacturer": "Karte 001",
+                    "model": "SmInt",
+                    "serial_number": "12345",
+                    "sw_version": "0015.1.0"
+                  }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t1_txt) }}/start_time/state"
+              payload: "{{ now().isoformat() }}"
+              qos: 0
+              retain: true
+          - choose: []
+            default: !input esphome_in_action
+
+      # ==========================================
+      # TAG 1 - OFF (End Time, kWh, CO2)
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: "T1_OFF"
+        sequence:
+          # Endzeit config
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t1_txt) }}/end_time/config"
+              payload: >-
+                {
+                  "name": "02_Endzeitpunkt",
+                  "state_topic": "homeassistant/sensor/{{ states(t1_txt) }}/end_time/state",
+                  "unique_id": "{{ states(t1_txt) }}_end_time",
+                  "device_class": "timestamp",
+                  "device": { "identifiers": ["{{ states(t1_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t1_txt) }}/end_time/state"
+              payload: "{{ now().isoformat() }}"
+              retain: true
+          
+          # kWh config
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t1_txt) }}/kwh_{{ sid }}/config"
+              payload: >-
+                {
+                  "name": "05_Stromverbrauch Gesamt",
+                  "state_topic": "homeassistant/sensor/{{ states(t1_txt) }}/kwh_{{ sid }}/state",
+                  "unit_of_measurement": "kWh",
+                  "device_class": "energy",
+                  "state_class": "total",
+                  "unique_id": "{{ states(t1_txt) }}_kwh_{{ sid }}",
+                  "device": { "identifiers": ["{{ states(t1_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t1_txt) }}/kwh_{{ sid }}/state"
+              payload: "{{ states(t1_kwh) }}"
+              retain: true
+
+          # CO2 config
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t1_txt) }}/co2_{{ sid }}/config"
+              payload: >-
+                {
+                  "name": "06_CO2 Äquivalent Gesamt",
+                  "state_topic": "homeassistant/sensor/{{ states(t1_txt) }}/co2_{{ sid }}/state",
+                  "unit_of_measurement": "kg CO₂e",
+                  "state_class": "total",
+                  "unique_id": "{{ states(t1_txt) }}_co2_{{ sid }}",
+                  "device": { "identifiers": ["{{ states(t1_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t1_txt) }}/co2_{{ sid }}/state"
+              payload: "{{ states(t1_co2) }}"
+              retain: true
+          
+          - choose: []
+            default: !input esphome_in_action
+
+      # ==========================================
+      # TAG 2 - ON
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: "T2_ON"
+        sequence:
+          - choose: []
+            default: !input t2_script
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t2_txt) }}/start_time/config"
+              payload: >-
+                {
+                  "name": "01_Startzeitpunkt",
+                  "state_topic": "homeassistant/sensor/{{ states(t2_txt) }}/start_time/state",
+                  "unique_id": "{{ states(t2_txt) }}_start_time",
+                  "device_class": "timestamp",
+                  "device": { "identifiers": ["{{ states(t2_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t2_txt) }}/start_time/state"
+              payload: "{{ now().isoformat() }}"
+              retain: true
+          - choose: []
+            default: !input esphome_in_action
+
+      # ==========================================
+      # TAG 2 - OFF
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: "T2_OFF"
+        sequence:
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t2_txt) }}/end_time/config"
+              payload: >-
+                {
+                  "name": "02_Endzeitpunkt",
+                  "state_topic": "homeassistant/sensor/{{ states(t2_txt) }}/end_time/state",
+                  "unique_id": "{{ states(t2_txt) }}_end_time",
+                  "device_class": "timestamp",
+                  "device": { "identifiers": ["{{ states(t2_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t2_txt) }}/end_time/state"
+              payload: "{{ now().isoformat() }}"
+              retain: true
+          
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t2_txt) }}/kwh_{{ sid }}/config"
+              payload: >-
+                {
+                  "name": "05_Stromverbrauch Gesamt",
+                  "state_topic": "homeassistant/sensor/{{ states(t2_txt) }}/kwh_{{ sid }}/state",
+                  "unit_of_measurement": "kWh",
+                  "device_class": "energy",
+                  "state_class": "total",
+                  "unique_id": "{{ states(t2_txt) }}_kwh_{{ sid }}",
+                  "device": { "identifiers": ["{{ states(t2_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t2_txt) }}/kwh_{{ sid }}/state"
+              payload: "{{ states(t2_kwh) }}"
+              retain: true
+
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t2_txt) }}/co2_{{ sid }}/config"
+              payload: >-
+                {
+                  "name": "06_CO2 Äquivalent Gesamt",
+                  "state_topic": "homeassistant/sensor/{{ states(t2_txt) }}/co2_{{ sid }}/state",
+                  "unit_of_measurement": "kg CO₂e",
+                  "state_class": "total",
+                  "unique_id": "{{ states(t2_txt) }}_co2_{{ sid }}",
+                  "device": { "identifiers": ["{{ states(t2_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t2_txt) }}/co2_{{ sid }}/state"
+              payload: "{{ states(t2_co2) }}"
+              retain: true
+          
+          - choose: []
+            default: !input esphome_in_action
+
+      # ==========================================
+      # TAG 3 - ON
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: "T3_ON"
+        sequence:
+          - choose: []
+            default: !input t3_script
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t3_txt) }}/start_time/config"
+              payload: >-
+                {
+                  "name": "01_Startzeitpunkt",
+                  "state_topic": "homeassistant/sensor/{{ states(t3_txt) }}/start_time/state",
+                  "unique_id": "{{ states(t3_txt) }}_start_time",
+                  "device_class": "timestamp",
+                  "device": { "identifiers": ["{{ states(t3_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t3_txt) }}/start_time/state"
+              payload: "{{ now().isoformat() }}"
+              retain: true
+          - choose: []
+            default: !input esphome_in_action
+
+      # ==========================================
+      # TAG 3 - OFF
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: "T3_OFF"
+        sequence:
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t3_txt) }}/end_time/config"
+              payload: >-
+                {
+                  "name": "02_Endzeitpunkt",
+                  "state_topic": "homeassistant/sensor/{{ states(t3_txt) }}/end_time/state",
+                  "unique_id": "{{ states(t3_txt) }}_end_time",
+                  "device_class": "timestamp",
+                  "device": { "identifiers": ["{{ states(t3_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t3_txt) }}/end_time/state"
+              payload: "{{ now().isoformat() }}"
+              retain: true
+          
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t3_txt) }}/kwh_{{ sid }}/config"
+              payload: >-
+                {
+                  "name": "05_Stromverbrauch Gesamt",
+                  "state_topic": "homeassistant/sensor/{{ states(t3_txt) }}/kwh_{{ sid }}/state",
+                  "unit_of_measurement": "kWh",
+                  "device_class": "energy",
+                  "state_class": "total",
+                  "unique_id": "{{ states(t3_txt) }}_kwh_{{ sid }}",
+                  "device": { "identifiers": ["{{ states(t3_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t3_txt) }}/kwh_{{ sid }}/state"
+              payload: "{{ states(t3_kwh) }}"
+              retain: true
+
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t3_txt) }}/co2_{{ sid }}/config"
+              payload: >-
+                {
+                  "name": "06_CO2 Äquivalent Gesamt",
+                  "state_topic": "homeassistant/sensor/{{ states(t3_txt) }}/co2_{{ sid }}/state",
+                  "unit_of_measurement": "kg CO₂e",
+                  "state_class": "total",
+                  "unique_id": "{{ states(t3_txt) }}_co2_{{ sid }}",
+                  "device": { "identifiers": ["{{ states(t3_txt) }}"] }
+                }
+              retain: true
+          - delay: { seconds: 1 }
+          - action: mqtt.publish
+            data:
+              topic: "homeassistant/sensor/{{ states(t3_txt) }}/co2_{{ sid }}/state"
+              payload: "{{ states(t3_co2) }}"
+              retain: true
+          
+          - choose: []
+            default: !input esphome_in_action

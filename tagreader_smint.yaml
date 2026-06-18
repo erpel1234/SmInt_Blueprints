@@ -1,0 +1,286 @@
+blueprint:
+  name: SmInt TR-K-01 → Tag Handler
+  description: >
+    Blueprint für einen Tag:
+    - ON: MC Boolean einschalten, Energy Speicher reset, Utility Meter kalibrieren, Display aktualisieren, ESPHome IN
+    - OFF: Energy Speicher addieren, Display aktualisieren, ESPHome OUT
+  domain: automation
+
+  input:
+    # Tag Boolean (Trigger)
+    tag1_boolean:
+      name: Tag 001 Boolean
+      selector:
+        entity:
+          domain: input_boolean
+
+    tag2_boolean:
+      name: Tag 002 Boolean
+      selector:
+        entity:
+          domain: input_boolean
+
+    tag3_boolean:
+      name: Tag 003 Boolean
+      selector:
+        entity:
+          domain: input_boolean
+
+    # Master Check Boolean
+    mc_tag1_boolean:
+      name: MC Tag 001 Boolean
+      selector:
+        entity:
+          domain: input_boolean
+
+    mc_tag2_boolean:
+      name: MC Tag 002 Boolean
+      selector:
+        entity:
+          domain: input_boolean
+
+    mc_tag3_boolean:
+      name: MC Tag 003 Boolean
+      selector:
+        entity:
+          domain: input_boolean
+
+    # Energy Speicher
+    tag1_number:
+      name: Tag 001 Energy Speicher
+      selector:
+        entity:
+          domain: input_number
+
+    tag2_number:
+      name: Tag 002 Energy Speicher
+      selector:
+        entity:
+          domain: input_number
+
+    tag3_number:
+      name: Tag 003 Energy Speicher
+      selector:
+        entity:
+          domain: input_number
+
+    # Utility Meter Sensor
+    tag1_meter:
+      name: Tag 001 Utility Meter
+      selector:
+        entity:
+          domain: sensor
+
+    tag2_meter:
+      name: Tag 002 Utility Meter
+      selector:
+        entity:
+          domain: sensor
+
+    tag3_meter:
+      name: Tag 003 Utility Meter
+      selector:
+        entity:
+          domain: sensor
+
+    # Display
+    display_text:
+      name: Display Input Text
+      selector:
+        entity:
+          domain: input_text
+
+    # ESPHome Actions
+    esphome_in:
+      name: ESPHome IN Action
+      default: []
+      selector:
+        action: {}
+    esphome_out:
+      name: ESPHome OUT Action
+      default: []
+      selector:
+        action: {}
+
+mode: single
+
+trigger:
+  - platform: state
+    entity_id: !input tag1_boolean
+    id: Tag001
+
+  - platform: state
+    entity_id: !input tag2_boolean
+    id: Tag002
+
+  - platform: state
+    entity_id: !input tag3_boolean
+    id: Tag003
+
+condition: []
+
+action:
+  - choose:
+  # --------------------
+  # TAG1 ON
+  # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag001
+          - condition: state
+            entity_id: !input tag1_boolean
+            state: "on"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input mc_tag1_boolean
+                state: "off"
+            then:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: !input mc_tag1_boolean
+          - action: utility_meter.calibrate
+            target:
+              entity_id: !input tag1_meter
+            data:
+              value: 0
+          - sequence: !input esphome_in
+
+  # --------------------
+  # TAG1 OFF
+  # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag001
+          - condition: state
+            entity_id: !input tag1_boolean
+            state: "off"
+        sequence:
+          - variables:
+              tag1_number_entity: !input tag1_number
+              tag1_meter_entity: !input tag1_meter
+          - service: input_number.set_value
+            target:
+              entity_id: !input tag1_number
+            data:
+              value: >
+                {{ states(tag1_number_entity) | float(0) + states(tag1_meter_entity) | float(0) }}
+          - sequence: !input esphome_out
+
+  # --------------------
+  # TAG2 ON
+  # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag002
+          - condition: state
+            entity_id: !input tag2_boolean
+            state: "on"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input mc_tag2_boolean
+                state: "off"
+            then:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: !input mc_tag2_boolean
+          - action: utility_meter.calibrate
+            target:
+              entity_id: !input tag2_meter
+            data:
+              value: 0
+          - sequence: !input esphome_in
+
+  # --------------------
+  # TAG2 OFF
+  # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag002
+          - condition: state
+            entity_id: !input tag2_boolean
+            state: "off"
+        sequence:
+          - variables:
+              tag2_number_entity: !input tag2_number
+              tag2_meter_entity: !input tag2_meter
+          - service: input_number.set_value
+            target:
+              entity_id: !input tag2_number
+            data:
+              value: >
+                {{ states(tag2_number_entity) | float(0) + states(tag2_meter_entity) | float(0) }}
+          - sequence: !input esphome_out
+
+  # --------------------
+  # TAG3 ON
+  # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag003
+          - condition: state
+            entity_id: !input tag3_boolean
+            state: "on"
+        sequence:
+          - if:
+              - condition: state
+                entity_id: !input mc_tag3_boolean
+                state: "off"
+            then:
+              - action: input_boolean.turn_on
+                target:
+                  entity_id: !input mc_tag3_boolean
+          - action: utility_meter.calibrate
+            target:
+              entity_id: !input tag3_meter
+            data:
+              value: 0
+          - sequence: !input esphome_in
+
+  # --------------------
+  # TAG3 OFF
+  # --------------------
+      - conditions:
+          - condition: trigger
+            id: Tag003
+          - condition: state
+            entity_id: !input tag3_boolean
+            state: "off"
+        sequence:
+          - variables:
+              tag3_number_entity: !input tag3_number
+              tag3_meter_entity: !input tag3_meter
+          - service: input_number.set_value
+            target:
+              entity_id: !input tag3_number
+            data:
+              value: >
+                {{ states(tag3_number_entity) | float(0) + states(tag3_meter_entity) | float(0) }}
+          - sequence: !input esphome_out
+
+  # ==========================================
+  # DISPLAY UPDATE (läuft IMMER danach)
+  # ==========================================
+
+  - variables:
+      tag1_entity: !input tag1_boolean
+      tag2_entity: !input tag2_boolean
+      tag3_entity: !input tag3_boolean
+
+  - service: input_text.set_value
+    target:
+      entity_id: !input display_text
+    data:
+      value: >-
+        {% set tags = [
+          '001' if is_state(tag1_entity, 'on') else '',
+          '002' if is_state(tag2_entity, 'on') else '',
+          '003' if is_state(tag3_entity, 'on') else ''
+        ] | reject('equalto','') | list %}
+
+        {% if tags | length == 0 %}
+          Bitte Karte scannen!
+        {% else %}
+          Karten eingeloggt: {{ tags | join(', ') }}
+        {% endif %}

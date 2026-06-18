@@ -1,0 +1,148 @@
+blueprint:
+  name: Generate Random Experiment Tags
+  description: Generate random experiment tag with timestamp
+  domain: automation
+
+  input:
+
+    trigger_tag001:
+      name: Trigger Tag001
+      selector:
+        entity:
+          domain: input_boolean
+
+    trigger_tag002:
+      name: Trigger Tag002
+      selector:
+        entity:
+          domain: input_boolean
+
+    trigger_tag003:
+      name: Trigger Tag003
+      selector:
+        entity:
+          domain: input_boolean
+
+    base_tag001:
+      name: Base Name Tag001
+      selector:
+        entity:
+          domain: input_text
+
+    base_tag002:
+      name: Base Name Tag002
+      selector:
+        entity:
+          domain: input_text
+
+    base_tag003:
+      name: Base Name Tag003
+      selector:
+        entity:
+          domain: input_text
+
+    output_tag001:
+      name: Output Tag001
+      selector:
+        entity:
+          domain: input_text
+
+    output_tag002:
+      name: Output Tag002
+      selector:
+        entity:
+          domain: input_text
+
+    output_tag003:
+      name: Output Tag003
+      selector:
+        entity:
+          domain: input_text
+
+
+trigger:
+  - platform: state
+    entity_id: !input trigger_tag001
+    to: "on"
+    id: tag001
+
+  - platform: state
+    entity_id: !input trigger_tag002
+    to: "on"
+    id: tag002
+
+  - platform: state
+    entity_id: !input trigger_tag003
+    to: "on"
+    id: tag003
+
+
+action:
+
+  - variables:
+      timestamp: "{{ now().strftime('%Y%m%d') }}"
+      suffix: >
+        {% set chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' %}
+        {% set code = namespace(val='') %}
+        {% for _ in range(4) %}
+          {% set code.val = code.val + chars | random %}
+        {% endfor %}
+        {{ code.val }}
+
+  - choose:
+
+      - conditions:
+          - condition: trigger
+            id: tag001
+        sequence:
+
+          - variables:
+              base_entity: !input base_tag001
+
+          - service: input_text.set_value
+            target:
+              entity_id: !input output_tag001
+            data:
+              value: "{{ timestamp }}_{{ states(base_entity) }}_{{ suffix }}"
+
+#          - service: input_boolean.turn_off
+#            target:
+#              entity_id: !input trigger_tag001
+
+
+      - conditions:
+          - condition: trigger
+            id: tag002
+        sequence:
+
+          - variables:
+              base_entity: !input base_tag002
+
+          - service: input_text.set_value
+            target:
+              entity_id: !input output_tag002
+            data:
+              value: "{{ timestamp }}_{{ states(base_entity) }}_{{ suffix }}"
+
+#          - service: input_boolean.turn_off
+#            target:
+#              entity_id: !input trigger_tag002
+
+
+      - conditions:
+          - condition: trigger
+            id: tag003
+        sequence:
+
+          - variables:
+              base_entity: !input base_tag003
+
+          - service: input_text.set_value
+            target:
+              entity_id: !input output_tag003
+            data:
+              value: "{{ timestamp }}_{{ states(base_entity) }}_{{ suffix }}"
+
+#          - service: input_boolean.turn_off
+#            target:
+#              entity_id: !input trigger_tag003

@@ -1,0 +1,224 @@
+blueprint:
+  name: "SmInt Master Checkout All-in-One Controller"
+  description: "Kombiniert: Setzt bei ON die kWh-Zähler auf 0. Räumt bei OFF die Reader-Booleans auf, aktualisiert das Display und triggert ESPHome."
+  domain: automation
+
+  input:
+    # --- 1. Master Booleans (Trigger) ---
+    mc_tag1_boolean:
+      name: MC Tag 001 Boolean
+      selector: { entity: { domain: input_boolean } }
+    mc_tag2_boolean:
+      name: MC Tag 002 Boolean
+      selector: { entity: { domain: input_boolean } }
+    mc_tag3_boolean:
+      name: MC Tag 003 Boolean
+      selector: { entity: { domain: input_boolean } }
+
+    # --- 2. Input Numbers zum Zurücksetzen (Übertrag=0) ---
+    r1_tag1_number: { name: "R1 - Tag 001 kWh Speicher", selector: { entity: { domain: input_number } } }
+    r1_tag2_number: { name: "R1 - Tag 002 kWh Speicher", selector: { entity: { domain: input_number } } }
+    r1_tag3_number: { name: "R1 - Tag 003 kWh Speicher", selector: { entity: { domain: input_number } } }
+    
+    r2_tag1_number: { name: "R2 - Tag 001 kWh Speicher", selector: { entity: { domain: input_number } } }
+    r2_tag2_number: { name: "R2 - Tag 002 kWh Speicher", selector: { entity: { domain: input_number } } }
+    r2_tag3_number: { name: "R2 - Tag 003 kWh Speicher", selector: { entity: { domain: input_number } } }
+
+    # --- 3. Reader Booleans zum Zurücksetzen (Beim Checkout OFF) ---
+    r1_tag1_boolean: { name: "R1 - Tag 001 Boolean", selector: { entity: { domain: input_boolean } } }
+    r1_tag2_boolean: { name: "R1 - Tag 002 Boolean", selector: { entity: { domain: input_boolean } } }
+    r1_tag3_boolean: { name: "R1 - Tag 003 Boolean", selector: { entity: { domain: input_boolean } } }
+    
+    r2_tag1_boolean: { name: "R2 - Tag 001 Boolean", selector: { entity: { domain: input_boolean } } }
+    r2_tag2_boolean: { name: "R2 - Tag 002 Boolean", selector: { entity: { domain: input_boolean } } }
+    r2_tag3_boolean: { name: "R2 - Tag 003 Boolean", selector: { entity: { domain: input_boolean } } }
+
+    # --- 4. Display & Text-Speicher ---
+    display_text:
+      name: Display Input Text
+      selector: { entity: { domain: input_text } }
+    tag1_text_storage:
+      name: Tag 001 Name Speicher (input_text)
+      selector: { entity: { domain: input_text } }
+    tag2_text_storage:
+      name: Tag 002 Name Speicher (input_text)
+      selector: { entity: { domain: input_text } }
+    tag3_text_storage:
+      name: Tag 003 Name Speicher (input_text)
+      selector: { entity: { domain: input_text } }
+
+    # --- 5. ESPHome Actions ---
+    esphome_out:
+      name: ESPHome OUT Action (beim Checkout OFF)
+      default: []
+      selector: { action: {} }
+
+mode: parallel
+
+trigger:
+  # --- TRIGGER TAG 1 ---
+  - platform: state
+    entity_id: !input mc_tag1_boolean
+    from: "off"
+    to: "on"
+    id: Tag001_ON
+  - platform: state
+    entity_id: !input mc_tag1_boolean
+    from: "on"
+    to: "off"
+    id: Tag001_OFF
+
+  # --- TRIGGER TAG 2 ---
+  - platform: state
+    entity_id: !input mc_tag2_boolean
+    from: "off"
+    to: "on"
+    id: Tag002_ON
+  - platform: state
+    entity_id: !input mc_tag2_boolean
+    from: "on"
+    to: "off"
+    id: Tag002_OFF
+
+  # --- TRIGGER TAG 3 ---
+  - platform: state
+    entity_id: !input mc_tag3_boolean
+    from: "off"
+    to: "on"
+    id: Tag003_ON
+  - platform: state
+    entity_id: !input mc_tag3_boolean
+    from: "on"
+    to: "off"
+    id: Tag003_OFF
+
+action:
+  - choose:
+      # ==========================================
+      # TAG 1 - ON (Setzt Zähler auf 0)
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: Tag001_ON
+        sequence:
+          - action: input_number.set_value
+            data: { value: 0 }
+            target:
+              entity_id:
+                - !input r1_tag1_number
+                - !input r2_tag1_number
+
+      # ==========================================
+      # TAG 1 - OFF (Aufräumen, Display, ESPHome)
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: Tag001_OFF
+        sequence:
+          - variables:
+              tag1_name_entity: !input tag1_text_storage
+          - if:
+              - condition: state
+                entity_id: !input r1_tag1_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r1_tag1_boolean }
+          - if:
+              - condition: state
+                entity_id: !input r2_tag1_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r2_tag1_boolean }
+          - sequence: !input esphome_out
+          - action: input_text.set_value
+            target: { entity_id: !input display_text }
+            data:
+              value: "{{ states(tag1_name_entity) }} abgeschlossen!"
+
+      # ==========================================
+      # TAG 2 - ON
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: Tag002_ON
+        sequence:
+          - action: input_number.set_value
+            data: { value: 0 }
+            target:
+              entity_id:
+                - !input r1_tag2_number
+                - !input r2_tag2_number
+
+      # ==========================================
+      # TAG 2 - OFF
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: Tag002_OFF
+        sequence:
+          - variables:
+              tag2_name_entity: !input tag2_text_storage
+          - if:
+              - condition: state
+                entity_id: !input r1_tag2_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r1_tag2_boolean }
+          - if:
+              - condition: state
+                entity_id: !input r2_tag2_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r2_tag2_boolean }
+          - sequence: !input esphome_out
+          - action: input_text.set_value
+            target: { entity_id: !input display_text }
+            data:
+              value: "{{ states(tag2_name_entity) }} abgeschlossen!"
+
+      # ==========================================
+      # TAG 3 - ON
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: Tag003_ON
+        sequence:
+          - action: input_number.set_value
+            data: { value: 0 }
+            target:
+              entity_id:
+                - !input r1_tag3_number
+                - !input r2_tag3_number
+
+      # ==========================================
+      # TAG 3 - OFF
+      # ==========================================
+      - conditions:
+          - condition: trigger
+            id: Tag003_OFF
+        sequence:
+          - variables:
+              tag3_name_entity: !input tag3_text_storage
+          - if:
+              - condition: state
+                entity_id: !input r1_tag3_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r1_tag3_boolean }
+          - if:
+              - condition: state
+                entity_id: !input r2_tag3_boolean
+                state: "on"
+            then:
+              - action: input_boolean.turn_off
+                target: { entity_id: !input r2_tag3_boolean }
+          - sequence: !input esphome_out
+          - action: input_text.set_value
+            target: { entity_id: !input display_text }
+            data:
+              value: "{{ states(tag3_name_entity) }} abgeschlossen!"
