@@ -47,9 +47,19 @@ blueprint:
       default: "energy"
       selector:
         text: {}
-    manufacturer:
-      name: Hersteller (Manufacturer)
+    tag1_manufacturer:
+      name: Tag 001 Hersteller (Manufacturer)
       default: "Karte 001"
+      selector:
+        text: {}
+    tag2_manufacturer:
+      name: Tag 002 Hersteller (Manufacturer)
+      default: "Karte 002"
+      selector:
+        text: {}
+    tag3_manufacturer:
+      name: Tag 003 Hersteller (Manufacturer)
+      default: "Karte 003"
       selector:
         text: {}
 
@@ -125,7 +135,9 @@ action:
       sensor_name_v: !input sensor_name
       uom_v: !input unit_of_measurement
       d_class_v: !input device_class
-      mfg_v: !input manufacturer
+      tag1_mfg_v: !input tag1_manufacturer
+      tag2_mfg_v: !input tag2_manufacturer
+      tag3_mfg_v: !input tag3_manufacturer
 
   - choose:
       # --------------------
@@ -169,7 +181,7 @@ action:
                   "device": {
                     "identifiers": ["{{ states(tag1_text_entity) }}"],
                     "name": "{{ states(tag1_text_entity) }}",
-                    "manufacturer": "{{ mfg_v }}",
+                    "manufacturer": "{{ tag1_mfg_v }}",
                     "model": "SmInt",
                     "model_id": "test123",
                     "serial_number": "12345",
@@ -252,7 +264,7 @@ action:
                   "device": {
                     "identifiers": ["{{ states(tag2_text_entity) }}"],
                     "name": "{{ states(tag2_text_entity) }}",
-                    "manufacturer": "{{ mfg_v }}",
+                    "manufacturer": "{{ tag2_mfg_v }}",
                     "model": "SmInt",
                     "model_id": "test123",
                     "serial_number": "12345",
@@ -335,7 +347,7 @@ action:
                   "device": {
                     "identifiers": ["{{ states(tag3_text_entity) }}"],
                     "name": "{{ states(tag3_text_entity) }}",
-                    "manufacturer": "{{ mfg_v }}",
+                    "manufacturer": "{{ tag3_mfg_v }}",
                     "model": "SmInt",
                     "model_id": "test123",
                     "serial_number": "12345",
