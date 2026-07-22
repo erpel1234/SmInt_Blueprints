@@ -463,5 +463,5 @@ action:
         {% if ns.logged_in | length == 0 %}
           Bitte Karte scannen!
         {% else %}
-          Karten eingeloggt: {{ ns.logged_in | join(', ') }}
+          Karten eingeloggt:{{ '\n' }}{{ ns.logged_in | join(', ') }}
         {% endif %}

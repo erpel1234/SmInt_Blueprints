@@ -411,5 +411,5 @@ action:
         {% if tags | length == 0 %}
           Bitte Karte scannen!
         {% else %}
-          Karten eingeloggt: {{ tags | join(', ') }}
+          Karten eingeloggt:{{ '\n' }}{{ tags | join(', ') }}
         {% endif %}
