@@ -14,7 +14,7 @@ per MQTT als eigenes Gerät/Experiment veröffentlicht.
 |---|---|
 | **MC-K-01** (Master-Checkout-Reader) | Startet/beendet eine komplette Experiment-Session |
 | **TR-K-01 / TR-K-02** (Stations-Reader) | Messstationen, an denen der eigentliche Verbrauch gemessen wird |
-| **3 RFID-Karten** (Tag 001/002/003) | Jede Karte kann an jedem der 3 Reader gescannt werden |
+| **RFID-Karten** (Tag 001 … 010) | Bis zu 10 Karten, jede kann an jedem Reader gescannt werden |
 
 Die Reader sind ESPHome-Geräte mit RFID-Leser und Display; der UID-Wert der gescannten
 Karte landet als State in einem Home-Assistant-Sensor.
@@ -43,9 +43,9 @@ Die Logik ist in drei Schichten aufgeteilt, jede Schicht ist ein eigenes Bluepri
 
 1. **Hardware-Layer** — [tagreader_inpput_boolean_1_1.yaml](tagreader_inpput_boolean_1_1.yaml)
    Eine einzige Automation für alle 3 Reader. `state`-Trigger auf den drei
-   Reader-Sensoren; ein `choose`-Block vergleicht die gescannte UID mit den drei
-   konfigurierten Tag-UIDs und togglet das passende `input_boolean`
-   (z. B. `input_boolean.tr_k_01_switch_tag001`). Die Booleans sind die einzige
+   Reader-Sensoren; die gescannte UID wird in der Kartenliste nachgeschlagen und
+   das passende `input_boolean` getoggelt (z. B.
+   `input_boolean.tr_k_01_switch_tag001`). Die Booleans sind die einzige
    Schnittstelle zu den nächsten Schichten — die Reader-Hardware ist damit
    vollständig entkoppelt. `mode: queued` verhindert verlorene Scans.
 
@@ -58,9 +58,11 @@ Die Logik ist in drei Schichten aufgeteilt, jede Schicht ist ein eigenes Bluepri
    *OFF-Zweig:* Meter-Delta auf das `input_number` aufaddieren, MQTT-State
    publizieren, ESPHome-OUT-Aktion. Danach wird in beiden Fällen der Display-Text
    des Readers per Jinja-Template neu berechnet (`input_text.set_value`).
+   Pro Karte lassen sich zusätzlich beliebig viele weitere Messgrößen als Liste
+   hinterlegen (Passthrough oder Meter-basiert, z. B. Argon- oder Gasverbrauch).
 
 3. **MC Session Controller** — [tagreader_mc_session_controller.yaml](tagreader_mc_session_controller.yaml)
-   Einmal global instanziiert. Triggert auf die drei MC-Booleans. Kapselt die
+   Einmal global instanziiert. Triggert auf die MC-Booleans. Kapselt die
    Session-Lebenszyklus-Logik in **garantierter Reihenfolge** (früher waren das
    mehrere parallel laufende Automationen mit Race Conditions, siehe KONTEXT.md):
    *ON:* Flush-Script → Zähler-Reset → Zufallsnamen-Generierung → MQTT-Startzeit →
@@ -68,33 +70,42 @@ Die Logik ist in drei Schichten aufgeteilt, jede Schicht ist ein eigenes Bluepri
    finalen Messwert befüllt) → 1 s warten → MQTT Endzeit/kWh/CO₂ → ESPHome OUT →
    Display-Meldung.
 
+Alle drei Blueprints arbeiten intern **listengetrieben**: sie bauen zu Beginn eine
+Liste aller Karten-Definitionen auf, suchen daraus per `trigger.entity_id` den
+passenden Eintrag und laufen dann einmal generisch durch — statt eines
+`choose`-Zweigs pro Karte. Deshalb kostet eine zusätzliche Karte keine
+Logik-Duplikation mehr, sondern nur einen Listeneintrag.
+
 Datenfluss der Messwerte: `sensor.tr_k_0N_kwh_um_tagXXX` (Utility Meter, Delta seit
 Kalibrierung) → `input_number.tr_k_0N_kwh_um_added_tagXXX` (aufaddiert pro Session) →
 `sensor.final_kwh_tagXXX` / `sensor.final_co2_tagXXX` (Template-Sensoren, Summe über
 beide Stationen) → finale MQTT-Publikation beim MC-Checkout.
 
-## Dateiübersicht
+## Karten hinzufügen
 
-### Aktiv
+Jedes Blueprint bietet **10 Karten-Slots**. Karte 001 ist Pflicht, 002–010 sind
+optional — nicht benötigte Slots bleiben einfach leer.
+
+Da die Blueprints intern listengetrieben arbeiten, ist ein weiterer Slot kein
+Logik-Umbau mehr, sondern nur ein zusätzlicher Input-Block, ein Trigger und eine
+Zeile in `tag_defs`. Warum die Obergrenze trotzdem fest bei 10 liegt und nicht
+über ein freies Listenfeld beliebig wächst, steht in
+[KONTEXT.md](KONTEXT.md#karten-modell-10-feste-slots).
+
+## Dateiübersicht
 
 | Datei | Zweck |
 |---|---|
 | [tagreader_inpput_boolean_1_1.yaml](tagreader_inpput_boolean_1_1.yaml) | Hardware-Layer: UID → `input_boolean.toggle` |
-| [tagreader_reader_session_handler.yaml](tagreader_reader_session_handler.yaml) | Pro-Reader-Logik (Check-in/Check-out an der Station) |
+| [tagreader_reader_session_handler.yaml](tagreader_reader_session_handler.yaml) | Pro-Reader-Logik (Check-in/Check-out an der Station, inkl. Zusatzsensoren) |
 | [tagreader_mc_session_controller.yaml](tagreader_mc_session_controller.yaml) | Globale Session-Steuerung (Start/Ende, Reihenfolge-Garantien) |
 
-### In Testing
-
-| Datei | Zweck |
-|---|---|
-| [tagreader_reader_session_handler_v2.yaml](tagreader_reader_session_handler_v2.yaml) | Erweiterung des Reader Session Handlers: bis zu 10 Karten, pro Karte beliebig viele Zusatzsensoren (Passthrough oder Meter-basiert) |
-
-### Abgelöst (Rollback-Referenz)
-
-`tagreader_smint.yaml`, `tagreader_device_creation.yaml`,
-`tagreader_ergaenzungunddasandere.yaml`, `tagreader_mc_device_erzeugen.yaml`,
-`tagreader_generate_random_experiment_name.yaml` — wurden durch die aktiven
-Blueprints ersetzt, Details in [KONTEXT.md](KONTEXT.md).
+Fünf ältere Blueprints sowie der frühere Testkandidat
+`tagreader_reader_session_handler_v2.yaml` wurden entfernt, weil sie in den drei
+aktiven Dateien aufgegangen sind. Sie bleiben über die Git-Historie
+wiederherstellbar — welche Datei wodurch ersetzt wurde und aus welchem Commit sie
+sich zurückholen lässt, steht in
+[KONTEXT.md](KONTEXT.md#entfernte-blueprints-stand-6-august-2026).
 
 ## Installation
 
@@ -108,6 +119,9 @@ Blueprints ersetzt, Details in [KONTEXT.md](KONTEXT.md).
    - 1× Hardware-Layer (alle 3 Reader in einer Automation)
    - 1× Reader Session Handler **pro Stations-Reader**
    - 1× MC Session Controller
+
+   In allen drei Automationen dieselben Karten-Slots in derselben Reihenfolge
+   belegen (Karte 001 = Slot 1 usw.) — das erspart beim Debuggen viel Sucherei.
 4. Nach Änderungen an einem Blueprint: in HA **Re-Import** ausführen, damit die
    Automationen die neue Version übernehmen.
 

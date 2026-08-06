@@ -8,35 +8,35 @@ Ablaufdiagramm: siehe [ablaufdiagramm.md](ablaufdiagramm.md).
 
 - **1 MC-Reader** (MC-K-01): "Master Checkout" — startet/beendet eine komplette Experiment-Session.
 - **2 Stations-Reader** (TR-K-01, TR-K-02): wo die eigentliche Nutzung (z.B. Mikrowelle) gemessen wird.
-- **3 Karten-Slots** (Tag 001/002/003): jede der 3 physischen RFID-Karten kann an jedem der 3 Reader gescannt werden.
+- **Karten-Slots**: 10 Karten, jede kann an jedem Reader gescannt werden. Karte 001 ist Pflicht, 002-010 optional.
+
+Für das aktuell im Aufbau befindliche Labor mit **5 Karten**: Karte 001-005 befüllen, 006-010 leer lassen.
 
 ## Die Blueprints
 
-### Aktiv / produktiv genutzt
+Alle drei sind aktiv und produktiv. Es gibt seit dem 10-Karten-Umbau keine "in Testing"-Variante mehr.
 
 | Datei | Zweck |
 |---|---|
 | [tagreader_inpput_boolean_1_1.yaml](tagreader_inpput_boolean_1_1.yaml) | Hardware-Layer. Liest UID vom jeweiligen Reader-Sensor, togglet das passende `input_boolean` (z.B. `r1_tag1_boolean`). 1 Automation für alle 3 Reader. |
-| [tagreader_reader_session_handler.yaml](tagreader_reader_session_handler.yaml) | Pro-Reader-Logik (1x für TR-K-01, 1x für TR-K-02 instanziiert). Bei Karten-Boolean ON: MC-Boolean einschalten falls aus, Utility Meter kalibrieren, MQTT-Discovery-Sensor publizieren, ESPHome IN. Bei OFF: Meter-Wert aufaddieren, MQTT-State publizieren, ESPHome OUT. Danach Display dieses Readers aktualisieren. |
+| [tagreader_reader_session_handler.yaml](tagreader_reader_session_handler.yaml) | Pro-Reader-Logik (1x für TR-K-01, 1x für TR-K-02 instanziiert). Bei Karten-Boolean ON: MC-Boolean einschalten falls aus, Utility Meter kalibrieren, MQTT-Discovery-Sensor publizieren, ESPHome IN. Bei OFF: Meter-Wert aufaddieren, MQTT-State publizieren, ESPHome OUT. Danach Display dieses Readers aktualisieren. Zusätzlich pro Karte ein freies Listenfeld für beliebig viele Zusatzsensoren (Passthrough oder Meter-basiert). |
 | [tagreader_mc_session_controller.yaml](tagreader_mc_session_controller.yaml) | Globale MC-Logik (1x instanziiert). Bei MC-Boolean ON: alten kWh-Wert flushen → R1/R2-Zähler resetten → neuen Zufallsnamen generieren → MQTT Startzeit → ESPHome IN. Bei OFF: Reader-Booleans aufräumen → MQTT Endzeit/kWh/CO2 → ESPHome OUT → Display "abgeschlossen". |
 
-### In Testing, noch nicht produktiv
+## Karten-Modell: 10 feste Slots
 
-| Datei | Zweck |
-|---|---|
-| [tagreader_reader_session_handler_v2.yaml](tagreader_reader_session_handler_v2.yaml) | Erweiterte Version von `tagreader_reader_session_handler.yaml`: bis zu 10 Karten-Slots statt 3, plus pro Karte ein freies Listenfeld für beliebig viele Zusatzsensoren (Passthrough oder Meter-basiert). Soll TR-K-01/02 perspektivisch ersetzen, nachdem es ausreichend getestet wurde. |
+Alle drei Blueprints arbeiten intern **listengetrieben**: die Aktionen kennen keine festen Karten-Nummern mehr, sondern bauen zu Beginn eine Liste `tag_defs` aus allen 10 Karten-Definitionen, suchen daraus per `trigger.entity_id` den passenden Eintrag (`this_tag`) und laufen dann genau einmal generisch durch — statt eines `choose`-Zweigs pro Karte. Die 10 GUI-Slots sind die Eingabemasken für diese Liste.
 
-### Abgelöst, nur als Rollback-Referenz behalten
+Karte 001 ist Pflicht, 002-010 optional — nicht benötigte Slots einfach leer lassen. Alle optionalen Felder haben `default: []`; ein leerer Slot liefert damit `[]` statt einer Entity-ID und fällt bei der Auswertung durch `select('string')` heraus.
 
-Diese 5 Blueprints wurden durch die zwei aktiven oben ersetzt. Die zugehörigen Automationen sollten deaktiviert sein.
+**Warum ausgerechnet 10 und nicht beliebig viele?** Eine unbegrenzte Karten-Liste wurde geprüft und bewusst verworfen (Entscheidung vom 6. August 2026, siehe [Offene Punkte](#offene-punkte--future-work)). Technisch ginge es nur über ein Freitext-`object`-Feld, in das man Entity-IDs von Hand einträgt, plus eine separate Mehrfachauswahl der Trigger-Booleans — denn HA-Blueprint-Trigger brauchen statische Entity-IDs und `!input`-Werte können nicht aus einem Template kommen. Das kostet alle Entity-Picker, Domain-Filter und Plausibilitätsprüfungen der Oberfläche und ist beim Einrichten deutlich fehleranfälliger. Falls doch mehr als 10 Karten gebraucht werden: die Engine ist bereits listengetrieben, ein weiterer Slot ist nur ein zusätzlicher Input-Block, ein Trigger und eine Zeile in `tag_defs`.
 
-| Datei | Wurde ersetzt durch |
-|---|---|
-| [tagreader_smint.yaml](tagreader_smint.yaml) | tagreader_reader_session_handler.yaml |
-| [tagreader_device_creation.yaml](tagreader_device_creation.yaml) | tagreader_reader_session_handler.yaml |
-| [tagreader_ergaenzungunddasandere.yaml](tagreader_ergaenzungunddasandere.yaml) | tagreader_mc_session_controller.yaml |
-| [tagreader_mc_device_erzeugen.yaml](tagreader_mc_device_erzeugen.yaml) | tagreader_mc_session_controller.yaml |
-| [tagreader_generate_random_experiment_name.yaml](tagreader_generate_random_experiment_name.yaml) | Logik ist inline in tagreader_mc_session_controller.yaml |
+**Warum ein einzelnes Flush-Script pro Slot im MC Controller?** `action`-Selektoren (Scripts als eingebettete Aktionssequenz) sind nicht template-fähig — man kann sie nicht über `this_tag` auswählen. Deshalb steht im ON-Zweig ein `choose` mit einem Zweig je Slot, der nur das jeweilige Flush-Script aufruft. Das ist die einzige Stelle, die pro Karte noch ausgeschrieben ist.
+
+### Reader-Anzahl
+
+Der MC Session Controller kennt pro Karte genau zwei Stations-Reader (R1/R2). Der Reader Session Handler skaliert ohnehin, weil er pro Reader einmal instanziiert wird. Der **Hardware-Layer** hat drei Reader-Sensoren fest verdrahtet (MC, Reader 1, Reader 2), weil jeder Reader einen eigenen Trigger mit eigener Trigger-ID braucht.
+
+Für einen dritten Stations-Reader wären also zwei Stellen anzufassen: im Hardware-Layer ein Trigger-Block plus ein `r3`-Schlüssel je Karte (alternativ eine zweite Automation aus demselben Blueprint, mit leerem MC/Reader 1), und im MC Controller ein drittes Boolean-/kWh-Feld je Karte.
 
 ## Wichtige Entity-Namenskonventionen
 
@@ -49,16 +49,38 @@ Diese 5 Blueprints wurden durch die zwei aktiven oben ersetzt. Die zugehörigen 
 - `sensor.final_kwh_tagXXX` / `sensor.final_co2_tagXXX` — Template-Sensoren, Summe aus TR-K-01 + TR-K-02 für die finale MC-Veröffentlichung.
 - `script.send_tagXXX_updates` — Flush-Script, publiziert vor dem MC-Reset den noch nicht abgeholten kWh-Wert per MQTT (nur wenn > 0).
 
+Für Karten 004-010 gilt dasselbe Schema mit `tag004` … `tag010`. Beim Anlegen der Helfer für eine neue Karte werden pro Karte gebraucht: 1× MC-Boolean, 1× Boolean je Stations-Reader, 1× `input_number` je Stations-Reader, 1× Utility Meter je Stations-Reader, 2× `input_text` (Experimentname + Basis-Name), 2× Template-Sensor (final kWh + CO2) und optional 1× Flush-Script.
+
+## Entfernte Blueprints (Stand: 6. August 2026)
+
+Die folgenden Dateien wurden aus dem Arbeitsverzeichnis **gelöscht**, weil sie durch die drei aktiven Blueprints vollständig ersetzt sind. Sie sind nicht verloren — der letzte Commit, in dem sie enthalten sind, ist **`e3e26b8`**; wiederherstellbar mit z.B. `git show e3e26b8:tagreader_smint.yaml` oder `git checkout e3e26b8 -- <datei>`.
+
+| Entfernte Datei | Wurde ersetzt durch |
+|---|---|
+| `tagreader_smint.yaml` | tagreader_reader_session_handler.yaml |
+| `tagreader_device_creation.yaml` | tagreader_reader_session_handler.yaml |
+| `tagreader_ergaenzungunddasandere.yaml` | tagreader_mc_session_controller.yaml |
+| `tagreader_mc_device_erzeugen.yaml` | tagreader_mc_session_controller.yaml |
+| `tagreader_generate_random_experiment_name.yaml` | Logik ist inline in tagreader_mc_session_controller.yaml |
+| `tagreader_reader_session_handler_v2.yaml` | in tagreader_reader_session_handler.yaml aufgegangen (siehe unten) |
+
+**Zu v2:** Der frühere Testkandidat `tagreader_reader_session_handler_v2.yaml` (10 Karten + Zusatzsensor-Listen) ist jetzt der reguläre Reader Session Handler. Die Input-Schlüssel sind identisch geblieben, eine bestehende Test-Automation muss also nur in ihrem YAML auf den neuen Blueprint-Pfad zeigen (`use_blueprint: path:`), die konfigurierten Werte bleiben gültig.
+
+Bevor die alten Blueprints ganz verschwinden: **die zugehörigen Automationen in Home Assistant müssen deaktiviert bzw. gelöscht sein**, sonst laufen sie ins Leere.
+
 ## Bekannte, bereits gefixte Bugs
 
-1. **Tag002/003 Auto-Checkout-Bug**: In der alten `tagreader_generate_random_experiment_name.yaml` wurde `mc_tagX_boolean` für Tag 2/3 direkt nach der Namensvergabe wieder ausgeschaltet → sofortiges, ungewolltes Checkout. Tag 1 war korrekt (turn_off war dort schon auskommentiert). Fix: turn_off für alle 3 Tags auskommentiert, Logik jetzt ohnehin inline im MC Session Controller.
+1. **Tag002/003 Auto-Checkout-Bug**: In der alten `tagreader_generate_random_experiment_name.yaml` wurde `mc_tagX_boolean` für Tag 2/3 direkt nach der Namensvergabe wieder ausgeschaltet → sofortiges, ungewolltes Checkout. Tag 1 war korrekt (turn_off war dort schon auskommentiert). Fix: turn_off für alle Tags entfernt, Logik jetzt ohnehin inline im MC Session Controller.
 2. **Flush-vs-Reset-Race**: Das Flush-Script und der Zähler-Reset liefen als zwei separate, parallele Automationen ohne garantierte Reihenfolge. Fix: beides läuft jetzt sequenziell innerhalb von `tagreader_mc_session_controller.yaml` (Flush garantiert vor Reset).
 3. **Doppeltes ESPHome-Signal beim Checkout**: Die alte `tagreader_mc_device_erzeugen.yaml` rief `esphome_in_action` sowohl bei ON als auch bei OFF auf, zusätzlich zum separaten `esphome_out` aus `tagreader_ergaenzungunddasandere.yaml`. Fix: `esphome_in_action`/`esphome_out_action` sind jetzt getrennte Inputs im MC Session Controller.
 4. **Direkter MC-Checkout ohne vorherigen Reader-Checkout**: Die finalen kWh/CO2-Werte wurden gelesen, bevor die Reader-Booleans (und damit der zugrundeliegende Zähler) aufgeräumt waren — Ergebnis: 0 kWh, wenn man nicht vorher manuell am Reader ausgecheckt hat. Fix: Reihenfolge in der OFF-Sequenz umgedreht — Reader-Booleans zuerst ausschalten (löst Reader Session Handler aus), 1s warten, erst dann kWh/CO2 publizieren.
-5. **`manufacturer` war global statt pro Karte**: Sollte die jeweilige physische Karte repräsentieren ("Karte 001/002/003"), war aber ein einzelner globaler Wert für alle 3 Tags. Fix: `tag1_manufacturer`/`tag2_manufacturer`/`tag3_manufacturer` als eigene Inputs.
+5. **`manufacturer` war global statt pro Karte**: Sollte die jeweilige physische Karte repräsentieren ("Karte 001/002/003"), war aber ein einzelner globaler Wert für alle Tags. Fix: `tagN_manufacturer` als eigener Input je Karte.
+6. **Leerer Reader-State konnte einen leeren UID-Slot treffen**: Im Hardware-Layer wurde die gescannte UID direkt mit den konfigurierten UIDs verglichen. Bei 10 Slots sind die meisten UID-Felder leer, und ein Reader-Sensor, der auf `unknown`/`unavailable`/leer wechselt, hätte auf so einen leeren Slot gematcht. Fix: expliziter Guard, der leere und ungültige Reader-States vor dem Abgleich verwirft.
 
 ## Offene Punkte / Future Work
 
-- `tagreader_mc_session_controller.yaml` unterstützt weiterhin nur 3 Karten. Falls `tagreader_reader_session_handler_v2.yaml` (10 Karten) produktiv geht, bräuchten Karten 4-10 ebenfalls einen vollständigen MC-Checkout-Lebenszyklus (Namensgenerierung, Reset, finale Aggregation) — bisher nicht geplant/umgesetzt.
-- TR-K-02 auf den neuen `tagreader_reader_session_handler.yaml` (bzw. später v2) umzustellen wurde vorgeschlagen, Status der tatsächlichen Umstellung in Home Assistant ist hier nicht verifiziert — im Zweifel in HA nachsehen, welche Automationen aktiv sind.
-- `tagreader_reader_session_handler_v2.yaml` ist nur in einer Test-Automation ausprobiert, noch nicht für TR-K-01/02 produktiv im Einsatz.
+- Die 10-Karten-Blueprints sind statisch (YAML-Parsing, Template-Logik) verifiziert, aber **noch nicht in Home Assistant mit echter Hardware getestet**. Vor dem Rollout im neuen Labor: mit 1-2 Karten durchspielen, insbesondere den MC-OFF-Zweig (Reihenfolge Cleanup → kWh/CO2).
+- **Unbegrenzt viele Karten wurden bewusst nicht umgesetzt** (Entscheidung vom 6. August 2026). Eine Variante mit Freitext-Kartenliste + separater Trigger-Auswahl war gebaut und funktionsfähig, wurde aber zugunsten der einfacheren 10-Slot-Lösung wieder entfernt — Begründung siehe Abschnitt "Karten-Modell". Wiederherstellbar aus der Git-Historie, falls der Bedarf doch kommt.
+- Der Hardware-Layer unterstützt genau 3 Reader-Sensoren (MC + 2 Stationen), der MC Controller genau 2 Stations-Reader je Karte, siehe Abschnitt "Reader-Anzahl".
+- `mode: parallel` läuft in beiden Session-Blueprints mit `max: 25` (vorher Default 10) — bei 10 Karten × 2 Readern reicht das.
+- Der Reader Session Handler ruft beim Auschecken pro Zusatzsensor ein `delay: 1s` auf. Bei vielen Zusatzsensoren summiert sich das; falls das stört, ließe sich das Publish-Muster bündeln.

@@ -2,9 +2,11 @@
 
 Aktueller Stand nach allen Bugfixes (siehe [KONTEXT.md](KONTEXT.md) für Details zu jedem Schritt).
 
+Der Ablauf ist derselbe für jede Karte — die Blueprints suchen zu Beginn den zur auslösenden Entity gehörenden Karten-Eintrag heraus (`this_tag`) und durchlaufen den Graphen dann genau einmal. Ob es sich um Karte 001 oder 010 handelt, ändert nur die verwendeten Entities, nicht den Weg.
+
 ```mermaid
 flowchart TD
-    A[Karte an Reader 1/2 oder MC scannen] --> B{UID stimmt mit<br/>Tag 1/2/3 überein?}
+    A[Karte an Reader 1/2 oder MC scannen] --> B{"UID in der Kartenliste?<br/>(Slot 001-010)"}
     B -- nein --> Z[keine Aktion]
     B -- ja --> C["Hardware-Layer:<br/>input_boolean.toggle<br/>(r1/r2/mc_tagX_boolean)"]
 
@@ -30,12 +32,12 @@ flowchart TD
 
     subgraph MCC["MC Session Controller (1x global, MC-K-01)"]
         M -- ON --> N["① Flush-Script:<br/>alten kWh-Wert publizieren"]
-        N --> O["② r1/r2_tagX_number<br/>auf 0 resetten"]
+        N --> O["② r1/r2 kWh-Speicher<br/>auf 0 resetten"]
         O --> P["③ neuen Zufallsnamen<br/>generieren"]
         P --> Q["④ MQTT start_time<br/>publizieren"]
         Q --> R[⑤ ESPHome IN]
 
-        M -- OFF --> T["① r1/r2_tagX_boolean<br/>ausschalten, falls an"]
+        M -- OFF --> T["① Reader-Booleans<br/>dieser Karte ausschalten"]
         T --> T2["löst Reader Session Handler<br/>OFF-Zweig aus (s.o.)"]
         T2 --> Wait["② 1s warten"]
         Wait --> S["③ MQTT end_time/kwh/co2<br/>publizieren"]

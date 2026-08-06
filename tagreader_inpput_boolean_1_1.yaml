@@ -1,361 +1,248 @@
 blueprint:
-  name: Tag Reader → Input Boolean Toggle 1_1
+  name: "Tag Reader → Input Boolean Toggle (bis zu 10 Karten)"
   description: >
-    Diese Automation schaltet (toggle) unterschiedliche input_booleans,
-    abhängig davon, welcher Tag (UID) von welchem Tag-Reader erkannt wurde.
-    
+    Hardware-Layer: schaltet (toggle) das passende input_boolean, abhängig davon,
+    welche Karten-UID an welchem Reader gescannt wurde.
+
+    Unterstützt 10 Karten-Slots. Karte 001 ist Pflicht, Karte 002-010 optional -
+    einfach leer lassen, was nicht gebraucht wird.
+
     Vorgehensweise:
-    1. Trage unten die UID deiner Tags ein.
-    2. Wähle die jeweiligen Reader-Sensoren aus.
-    3. Ordne jedem Tag pro Reader ein input_boolean zu.
-    
-    Wenn ein bestimmter Tag an einem bestimmten Reader erkannt wird,
-    wird das zugewiesene input_boolean umgeschaltet (AN/AUS).
+    1. Reader-Sensoren auswählen (MC, Reader 1, Reader 2).
+    2. Pro Karte die UID eintragen und die zugehörigen input_booleans zuordnen.
 
   domain: automation
 
   input:
-
-    uid_section:
-      name: UID Konfiguration
-      icon: mdi:card-account-details
-      collapsed: true
+    reader_section:
+      name: Reader-Sensoren
+      icon: mdi:nfc-variant
+      collapsed: false
       input:
-        tag_1_uid:
-          name: Tag 1 UID
-          description: >
-            Trage hier die exakte UID deines ersten Tags ein.
-            Die UID muss exakt dem Sensorwert entsprechen,
-            den dein Tag-Reader liefert.
-            
-            Beispiel:
-            04A224B91C2A80
-          default:
-          selector:
-            text:
-
-        tag_2_uid:
-          name: Tag 2 UID
-          description: >
-            Trage hier die UID deines zweiten Tags ein.
-            Die UID findest du im Zustand (State) des Tag-Reader-Sensors,
-            nachdem der Tag gescannt wurde.
-          default:
-          selector:
-            text:
-
-        tag_3_uid:
-          name: Tag 3 UID
-          description: >
-            Trage hier die UID deines dritten Tags ein.
-            Achte darauf, dass keine Leerzeichen enthalten sind
-            und Groß-/Kleinschreibung exakt passt.
-          default:
-          selector:
-            text:
-
-    name_reader_mc:
-      name: Reader MC Konfiguration (nur zur Orientierung)
-      description: >
-        Dieser Name dient nur deiner Übersicht.
-        Er wird nicht automatisch im Abschnittstitel angezeigt.
-
-    readermc_section:
-      name: Konfiguration
-      icon: mdi:toggle-switch
-      collapsed: true
-      input:
-
         reader_mc:
           name: Tag Reader MC Sensor
           description: >
-            Wähle hier den Sensor deines MC-Readers aus.
-            
-            Wichtig:
-            Der Sensor muss beim Scannen eines Tags als Zustand (State)
-            die UID des Tags liefern.
+            Sensor des MC-Readers (Master Checkout). Der Sensor muss beim Scannen
+            eines Tags als Zustand (State) die UID des Tags liefern.
           default: []
           selector:
             entity:
               filter:
-              - domain: 
-                - sensor
+                - domain: [sensor]
               multiple: false
-
-        mc_tag1_boolean:
-          name: Reader MC → Tag 1 Boolean
-          description: >
-            Wähle hier das input_boolean, das umgeschaltet werden soll,
-            wenn Reader MC Tag 1 erkennt.
-          default:
-          selector:
-            entity:
-              filter:
-                - domain: input_boolean
-
-        mc_tag2_boolean:
-          name: Reader MC → Tag 2 Boolean
-          description: >
-            Wähle hier das input_boolean für Tag 2 an Reader MC.
-          default:
-          selector:
-            entity:
-              filter:
-                - domain: input_boolean
-
-        mc_tag3_boolean:
-          name: Reader MC → Tag 3 Boolean
-          description: >
-            Wähle hier das input_boolean für Tag 3 an Reader MC.
-          default:
-          selector:
-            entity:
-              filter:
-                - domain: input_boolean
-
-    name_reader_1:
-      name: Reader 1 Konfiguration (nur zur Orientierung)
-      description: >
-        Dieser Name dient nur deiner Übersicht.
-        Er wird nicht automatisch im Abschnittstitel angezeigt.
-
-    reader1_section:
-      name: Konfiguration
-      icon: mdi:toggle-switch
-      collapsed: true
-      input:
-
         reader_1:
           name: Tag Reader 1 Sensor
-          description: >
-            Wähle hier den Sensor deines ersten Tag-Readers aus.
-            
-            Wichtig:
-            Der Sensor muss beim Scannen eines Tags als Zustand (State)
-            die UID des Tags liefern.
+          description: Sensor des ersten Stations-Readers (z.B. TR-K-01).
           default: []
           selector:
             entity:
               filter:
-              - domain: 
-                - sensor
+                - domain: [sensor]
               multiple: false
-
-        r1_tag1_boolean:
-          name: Reader 1 → Tag 1 Boolean
-          description: >
-            Wähle hier das input_boolean, das umgeschaltet werden soll,
-            wenn Reader 1 Tag 1 erkennt.
-          default:
-          selector:
-            entity:
-              filter:
-                - domain: input_boolean
-
-        r1_tag2_boolean:
-          name: Reader 1 → Tag 2 Boolean
-          description: >
-            Wähle hier das input_boolean für Tag 2 an Reader 1.
-          default:
-          selector:
-            entity:
-              filter:
-                - domain: input_boolean
-
-        r1_tag3_boolean:
-          name: Reader 1 → Tag 3 Boolean
-          description: >
-            Wähle hier das input_boolean für Tag 3 an Reader 1.
-          default:
-          selector:
-            entity:
-              filter:
-                - domain: input_boolean
-
-    name_reader_2:
-      name: Reader 2 Konfiguration (nur zur Orientierung)
-      description: >
-        Dieser Name dient nur deiner Übersicht.
-        Er wird nicht automatisch im Abschnittstitel angezeigt.
-
-    reader2_section:
-      name: Konfiguration
-      icon: mdi:toggle-switch
-      collapsed: true
-      input:
-
         reader_2:
           name: Tag Reader 2 Sensor
-          description: >
-            Wähle hier den Sensor deines zweiten Tag-Readers aus.
-            
-            Auch dieser Sensor muss beim Scannen die UID
-            als Zustand ausgeben.
+          description: Sensor des zweiten Stations-Readers (z.B. TR-K-02).
           default: []
           selector:
             entity:
               filter:
-              - domain: 
-                - sensor
+                - domain: [sensor]
               multiple: false
 
+    karte1_section:
+      name: Karte 001
+      icon: mdi:card-account-details
+      collapsed: false
+      input:
+        tag_1_uid:
+          name: Tag 001 UID
+          description: >
+            Exakte UID der Karte, genau so wie sie der Reader-Sensor als State
+            liefert (Groß-/Kleinschreibung beachten, keine Leerzeichen).
+            Beispiel: 04A224B91C2A80
+          default:
+          selector:
+            text:
+        mc_tag1_boolean:
+          name: Reader MC → Tag 001 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
+        r1_tag1_boolean:
+          name: Reader 1 → Tag 001 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
         r2_tag1_boolean:
-          name: Reader 2 → Tag 1 Boolean
-          description: >
-            Dieses input_boolean wird umgeschaltet,
-            wenn Reader 2 Tag 1 erkennt.
+          name: Reader 2 → Tag 001 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
+
+    karte2_section:
+      name: Karte 002 (optional)
+      icon: mdi:card-account-details
+      collapsed: false
+      input:
+        tag_2_uid:
+          name: Tag 002 UID
           default:
           selector:
-            entity:
-              filter:
-                - domain: input_boolean
-
+            text:
+        mc_tag2_boolean:
+          name: Reader MC → Tag 002 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
+        r1_tag2_boolean:
+          name: Reader 1 → Tag 002 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
         r2_tag2_boolean:
-          name: Reader 2 → Tag 2 Boolean
-          description: >
-            Dieses input_boolean wird umgeschaltet,
-            wenn Reader 2 Tag 2 erkennt.
-          default:
-          selector:
-            entity:
-              filter:
-                - domain: input_boolean
+          name: Reader 2 → Tag 002 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
 
-        r2_tag3_boolean:
-          name: Reader 2 → Tag 3 Boolean
-          description: >
-            Dieses input_boolean wird umgeschaltet,
-            wenn Reader 2 Tag 3 erkennt.
+    karte3_section:
+      name: Karte 003 (optional)
+      icon: mdi:card-account-details
+      collapsed: false
+      input:
+        tag_3_uid:
+          name: Tag 003 UID
           default:
           selector:
-            entity:
-              filter:
-                - domain: input_boolean
+            text:
+        mc_tag3_boolean:
+          name: Reader MC → Tag 003 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
+        r1_tag3_boolean:
+          name: Reader 1 → Tag 003 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
+        r2_tag3_boolean:
+          name: Reader 2 → Tag 003 Boolean
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }] } }
+
+    karte4_section:
+      name: Karte 004 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag_4_uid: { name: Tag 004 UID, default: , selector: { text: } }
+        mc_tag4_boolean: { name: Reader MC → Tag 004 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag4_boolean: { name: Reader 1 → Tag 004 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag4_boolean: { name: Reader 2 → Tag 004 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+
+    karte5_section:
+      name: Karte 005 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag_5_uid: { name: Tag 005 UID, default: , selector: { text: } }
+        mc_tag5_boolean: { name: Reader MC → Tag 005 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag5_boolean: { name: Reader 1 → Tag 005 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag5_boolean: { name: Reader 2 → Tag 005 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+
+    karte6_section:
+      name: Karte 006 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag_6_uid: { name: Tag 006 UID, default: , selector: { text: } }
+        mc_tag6_boolean: { name: Reader MC → Tag 006 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag6_boolean: { name: Reader 1 → Tag 006 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag6_boolean: { name: Reader 2 → Tag 006 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+
+    karte7_section:
+      name: Karte 007 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag_7_uid: { name: Tag 007 UID, default: , selector: { text: } }
+        mc_tag7_boolean: { name: Reader MC → Tag 007 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag7_boolean: { name: Reader 1 → Tag 007 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag7_boolean: { name: Reader 2 → Tag 007 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+
+    karte8_section:
+      name: Karte 008 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag_8_uid: { name: Tag 008 UID, default: , selector: { text: } }
+        mc_tag8_boolean: { name: Reader MC → Tag 008 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag8_boolean: { name: Reader 1 → Tag 008 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag8_boolean: { name: Reader 2 → Tag 008 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+
+    karte9_section:
+      name: Karte 009 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag_9_uid: { name: Tag 009 UID, default: , selector: { text: } }
+        mc_tag9_boolean: { name: Reader MC → Tag 009 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag9_boolean: { name: Reader 1 → Tag 009 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag9_boolean: { name: Reader 2 → Tag 009 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+
+    karte10_section:
+      name: Karte 010 (optional)
+      icon: mdi:card-account-details
+      collapsed: true
+      input:
+        tag_10_uid: { name: Tag 010 UID, default: , selector: { text: } }
+        mc_tag10_boolean: { name: Reader MC → Tag 010 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag10_boolean: { name: Reader 1 → Tag 010 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag10_boolean: { name: Reader 2 → Tag 010 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
 mode: queued
+max: 25
 
 trigger:
   - platform: state
     entity_id: !input reader_mc
-    id: readermc
-
+    id: "mc"
   - platform: state
     entity_id: !input reader_1
-    id: reader1
-
+    id: "r1"
   - platform: state
     entity_id: !input reader_2
-    id: reader2
+    id: "r2"
 
 condition: []
 
 action:
   - variables:
-      tag1: !input tag_1_uid
-      tag2: !input tag_2_uid
-      tag3: !input tag_3_uid
+      cards:
+        - { uid: !input tag_1_uid,  mc: !input mc_tag1_boolean,  r1: !input r1_tag1_boolean,  r2: !input r2_tag1_boolean }
+        - { uid: !input tag_2_uid,  mc: !input mc_tag2_boolean,  r1: !input r1_tag2_boolean,  r2: !input r2_tag2_boolean }
+        - { uid: !input tag_3_uid,  mc: !input mc_tag3_boolean,  r1: !input r1_tag3_boolean,  r2: !input r2_tag3_boolean }
+        - { uid: !input tag_4_uid,  mc: !input mc_tag4_boolean,  r1: !input r1_tag4_boolean,  r2: !input r2_tag4_boolean }
+        - { uid: !input tag_5_uid,  mc: !input mc_tag5_boolean,  r1: !input r1_tag5_boolean,  r2: !input r2_tag5_boolean }
+        - { uid: !input tag_6_uid,  mc: !input mc_tag6_boolean,  r1: !input r1_tag6_boolean,  r2: !input r2_tag6_boolean }
+        - { uid: !input tag_7_uid,  mc: !input mc_tag7_boolean,  r1: !input r1_tag7_boolean,  r2: !input r2_tag7_boolean }
+        - { uid: !input tag_8_uid,  mc: !input mc_tag8_boolean,  r1: !input r1_tag8_boolean,  r2: !input r2_tag8_boolean }
+        - { uid: !input tag_9_uid,  mc: !input mc_tag9_boolean,  r1: !input r1_tag9_boolean,  r2: !input r2_tag9_boolean }
+        - { uid: !input tag_10_uid, mc: !input mc_tag10_boolean, r1: !input r1_tag10_boolean, r2: !input r2_tag10_boolean }
 
-  - choose:
+  - variables:
+      scanned: "{{ trigger.to_state.state | default('', true) }}"
 
-      # =========================
-      # READER MC
-      # =========================
+  # Leere / ungültige Reader-States ignorieren (sonst würde ein leerer UID-Slot matchen)
+  - condition: template
+    value_template: "{{ scanned not in ['', 'unknown', 'unavailable', 'None', 'none'] }}"
 
-      - conditions:
-          - condition: trigger
-            id: readermc
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag1 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input mc_tag1_boolean
+  - variables:
+      hit: "{{ cards | selectattr('uid', 'defined') | selectattr('uid', 'eq', scanned) | list }}"
 
-      - conditions:
-          - condition: trigger
-            id: readermc
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag2 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input mc_tag2_boolean
+  - condition: template
+    value_template: "{{ hit | length > 0 }}"
 
-      - conditions:
-          - condition: trigger
-            id: readermc
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag3 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input mc_tag3_boolean
+  - variables:
+      # trigger.id ist 'mc' / 'r1' / 'r2' und zugleich der Schlüssel im Karten-Dict
+      target_boolean: "{{ hit[0].get(trigger.id, '') }}"
 
-      # =========================
-      # READER 1
-      # =========================
+  # Nicht konfigurierte Zuordnungen sind [] (leerer Entity-Selector) statt String -> überspringen
+  - condition: template
+    value_template: "{{ target_boolean is string and target_boolean | length > 0 }}"
 
-      - conditions:
-          - condition: trigger
-            id: reader1
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag1 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input r1_tag1_boolean
-
-      - conditions:
-          - condition: trigger
-            id: reader1
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag2 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input r1_tag2_boolean
-
-      - conditions:
-          - condition: trigger
-            id: reader1
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag3 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input r1_tag3_boolean
-
-
-      # =========================
-      # READER 2
-      # =========================
-
-      - conditions:
-          - condition: trigger
-            id: reader2
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag1 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input r2_tag1_boolean
-
-      - conditions:
-          - condition: trigger
-            id: reader2
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag2 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input r2_tag2_boolean
-
-      - conditions:
-          - condition: trigger
-            id: reader2
-          - condition: template
-            value_template: "{{ trigger.to_state.state == tag3 }}"
-        sequence:
-          - action: input_boolean.toggle
-            target:
-              entity_id: !input r2_tag3_boolean
+  - action: input_boolean.toggle
+    target:
+      entity_id: "{{ target_boolean }}"
