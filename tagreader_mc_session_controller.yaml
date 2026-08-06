@@ -14,7 +14,7 @@ blueprint:
     1. Reader-Booleans aller Stationen dieser Karte aufräumen (triggert den
        Reader Session Handler, der den letzten Messwert noch einträgt)
     2. 1s warten
-    3. MQTT Endzeit/kWh/CO2 publizieren
+    3. MQTT Endzeit/kWh/Wasser/CO2 publizieren
     4. ESPHome OUT
     5. Display "abgeschlossen"
 
@@ -94,6 +94,12 @@ blueprint:
         tag1_co2_sensor:
           name: Tag 001 Finaler CO2 Sensor (sensor.final_co2_tag...)
           selector: { entity: { domain: sensor } }
+        tag1_l_sensor:
+          name: Tag 001 Finaler Wasser Sensor (sensor.final_l_tag...)
+          description: >
+            Optional. Ist das Feld leer, wird kein Wasser-Sensor publiziert.
+          default: []
+          selector: { entity: { domain: sensor } }
         tag1_flush_script:
           name: Tag 001 Flush Script (Optional, publiziert alten kWh-Wert vor dem Reset)
           default: []
@@ -131,6 +137,12 @@ blueprint:
           selector: { entity: { domain: sensor } }
         tag2_co2_sensor:
           name: Tag 002 Finaler CO2 Sensor (sensor.final_co2_tag...)
+          default: []
+          selector: { entity: { domain: sensor } }
+        tag2_l_sensor:
+          name: Tag 002 Finaler Wasser Sensor (sensor.final_l_tag...)
+          description: >
+            Optional. Ist das Feld leer, wird kein Wasser-Sensor publiziert.
           default: []
           selector: { entity: { domain: sensor } }
         tag2_flush_script:
@@ -172,6 +184,12 @@ blueprint:
           name: Tag 003 Finaler CO2 Sensor (sensor.final_co2_tag...)
           default: []
           selector: { entity: { domain: sensor } }
+        tag3_l_sensor:
+          name: Tag 003 Finaler Wasser Sensor (sensor.final_l_tag...)
+          description: >
+            Optional. Ist das Feld leer, wird kein Wasser-Sensor publiziert.
+          default: []
+          selector: { entity: { domain: sensor } }
         tag3_flush_script:
           name: Tag 003 Flush Script (Optional, publiziert alten kWh-Wert vor dem Reset)
           default: []
@@ -190,6 +208,7 @@ blueprint:
         base_tag4: { name: Tag 004 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag4_kwh_sensor: { name: Tag 004 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
         tag4_co2_sensor: { name: Tag 004 Finaler CO2 Sensor, default: [], selector: { entity: { domain: sensor } } }
+        tag4_l_sensor: { name: Tag 004 Finaler Wasser Sensor (optional), default: [], selector: { entity: { domain: sensor } } }
         tag4_flush_script: { name: Tag 004 Flush Script (Optional), default: [], selector: { action: {} } }
 
     karte5_section:
@@ -204,6 +223,7 @@ blueprint:
         base_tag5: { name: Tag 005 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag5_kwh_sensor: { name: Tag 005 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
         tag5_co2_sensor: { name: Tag 005 Finaler CO2 Sensor, default: [], selector: { entity: { domain: sensor } } }
+        tag5_l_sensor: { name: Tag 005 Finaler Wasser Sensor (optional), default: [], selector: { entity: { domain: sensor } } }
         tag5_flush_script: { name: Tag 005 Flush Script (Optional), default: [], selector: { action: {} } }
 
     karte6_section:
@@ -218,6 +238,7 @@ blueprint:
         base_tag6: { name: Tag 006 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag6_kwh_sensor: { name: Tag 006 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
         tag6_co2_sensor: { name: Tag 006 Finaler CO2 Sensor, default: [], selector: { entity: { domain: sensor } } }
+        tag6_l_sensor: { name: Tag 006 Finaler Wasser Sensor (optional), default: [], selector: { entity: { domain: sensor } } }
         tag6_flush_script: { name: Tag 006 Flush Script (Optional), default: [], selector: { action: {} } }
 
     karte7_section:
@@ -232,6 +253,7 @@ blueprint:
         base_tag7: { name: Tag 007 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag7_kwh_sensor: { name: Tag 007 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
         tag7_co2_sensor: { name: Tag 007 Finaler CO2 Sensor, default: [], selector: { entity: { domain: sensor } } }
+        tag7_l_sensor: { name: Tag 007 Finaler Wasser Sensor (optional), default: [], selector: { entity: { domain: sensor } } }
         tag7_flush_script: { name: Tag 007 Flush Script (Optional), default: [], selector: { action: {} } }
 
     karte8_section:
@@ -246,6 +268,7 @@ blueprint:
         base_tag8: { name: Tag 008 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag8_kwh_sensor: { name: Tag 008 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
         tag8_co2_sensor: { name: Tag 008 Finaler CO2 Sensor, default: [], selector: { entity: { domain: sensor } } }
+        tag8_l_sensor: { name: Tag 008 Finaler Wasser Sensor (optional), default: [], selector: { entity: { domain: sensor } } }
         tag8_flush_script: { name: Tag 008 Flush Script (Optional), default: [], selector: { action: {} } }
 
     karte9_section:
@@ -260,6 +283,7 @@ blueprint:
         base_tag9: { name: Tag 009 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag9_kwh_sensor: { name: Tag 009 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
         tag9_co2_sensor: { name: Tag 009 Finaler CO2 Sensor, default: [], selector: { entity: { domain: sensor } } }
+        tag9_l_sensor: { name: Tag 009 Finaler Wasser Sensor (optional), default: [], selector: { entity: { domain: sensor } } }
         tag9_flush_script: { name: Tag 009 Flush Script (Optional), default: [], selector: { action: {} } }
 
     karte10_section:
@@ -274,6 +298,7 @@ blueprint:
         base_tag10: { name: Tag 010 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag10_kwh_sensor: { name: Tag 010 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
         tag10_co2_sensor: { name: Tag 010 Finaler CO2 Sensor, default: [], selector: { entity: { domain: sensor } } }
+        tag10_l_sensor: { name: Tag 010 Finaler Wasser Sensor (optional), default: [], selector: { entity: { domain: sensor } } }
         tag10_flush_script: { name: Tag 010 Flush Script (Optional), default: [], selector: { action: {} } }
 
 mode: parallel
@@ -385,16 +410,16 @@ action:
   - variables:
       sid: !input station_id
       tag_defs:
-        - { label: "001", mc: !input mc_tag1_boolean, rb: !input tag1_reader_booleans, rn: !input tag1_reader_numbers, text: !input tag1_text_storage, base: !input base_tag1, kwh: !input tag1_kwh_sensor, co2: !input tag1_co2_sensor }
-        - { label: "002", mc: !input mc_tag2_boolean, rb: !input tag2_reader_booleans, rn: !input tag2_reader_numbers, text: !input tag2_text_storage, base: !input base_tag2, kwh: !input tag2_kwh_sensor, co2: !input tag2_co2_sensor }
-        - { label: "003", mc: !input mc_tag3_boolean, rb: !input tag3_reader_booleans, rn: !input tag3_reader_numbers, text: !input tag3_text_storage, base: !input base_tag3, kwh: !input tag3_kwh_sensor, co2: !input tag3_co2_sensor }
-        - { label: "004", mc: !input mc_tag4_boolean, rb: !input tag4_reader_booleans, rn: !input tag4_reader_numbers, text: !input tag4_text_storage, base: !input base_tag4, kwh: !input tag4_kwh_sensor, co2: !input tag4_co2_sensor }
-        - { label: "005", mc: !input mc_tag5_boolean, rb: !input tag5_reader_booleans, rn: !input tag5_reader_numbers, text: !input tag5_text_storage, base: !input base_tag5, kwh: !input tag5_kwh_sensor, co2: !input tag5_co2_sensor }
-        - { label: "006", mc: !input mc_tag6_boolean, rb: !input tag6_reader_booleans, rn: !input tag6_reader_numbers, text: !input tag6_text_storage, base: !input base_tag6, kwh: !input tag6_kwh_sensor, co2: !input tag6_co2_sensor }
-        - { label: "007", mc: !input mc_tag7_boolean, rb: !input tag7_reader_booleans, rn: !input tag7_reader_numbers, text: !input tag7_text_storage, base: !input base_tag7, kwh: !input tag7_kwh_sensor, co2: !input tag7_co2_sensor }
-        - { label: "008", mc: !input mc_tag8_boolean, rb: !input tag8_reader_booleans, rn: !input tag8_reader_numbers, text: !input tag8_text_storage, base: !input base_tag8, kwh: !input tag8_kwh_sensor, co2: !input tag8_co2_sensor }
-        - { label: "009", mc: !input mc_tag9_boolean, rb: !input tag9_reader_booleans, rn: !input tag9_reader_numbers, text: !input tag9_text_storage, base: !input base_tag9, kwh: !input tag9_kwh_sensor, co2: !input tag9_co2_sensor }
-        - { label: "010", mc: !input mc_tag10_boolean, rb: !input tag10_reader_booleans, rn: !input tag10_reader_numbers, text: !input tag10_text_storage, base: !input base_tag10, kwh: !input tag10_kwh_sensor, co2: !input tag10_co2_sensor }
+        - { label: "001", mc: !input mc_tag1_boolean, rb: !input tag1_reader_booleans, rn: !input tag1_reader_numbers, text: !input tag1_text_storage, base: !input base_tag1, kwh: !input tag1_kwh_sensor, co2: !input tag1_co2_sensor, l: !input tag1_l_sensor }
+        - { label: "002", mc: !input mc_tag2_boolean, rb: !input tag2_reader_booleans, rn: !input tag2_reader_numbers, text: !input tag2_text_storage, base: !input base_tag2, kwh: !input tag2_kwh_sensor, co2: !input tag2_co2_sensor, l: !input tag2_l_sensor }
+        - { label: "003", mc: !input mc_tag3_boolean, rb: !input tag3_reader_booleans, rn: !input tag3_reader_numbers, text: !input tag3_text_storage, base: !input base_tag3, kwh: !input tag3_kwh_sensor, co2: !input tag3_co2_sensor, l: !input tag3_l_sensor }
+        - { label: "004", mc: !input mc_tag4_boolean, rb: !input tag4_reader_booleans, rn: !input tag4_reader_numbers, text: !input tag4_text_storage, base: !input base_tag4, kwh: !input tag4_kwh_sensor, co2: !input tag4_co2_sensor, l: !input tag4_l_sensor }
+        - { label: "005", mc: !input mc_tag5_boolean, rb: !input tag5_reader_booleans, rn: !input tag5_reader_numbers, text: !input tag5_text_storage, base: !input base_tag5, kwh: !input tag5_kwh_sensor, co2: !input tag5_co2_sensor, l: !input tag5_l_sensor }
+        - { label: "006", mc: !input mc_tag6_boolean, rb: !input tag6_reader_booleans, rn: !input tag6_reader_numbers, text: !input tag6_text_storage, base: !input base_tag6, kwh: !input tag6_kwh_sensor, co2: !input tag6_co2_sensor, l: !input tag6_l_sensor }
+        - { label: "007", mc: !input mc_tag7_boolean, rb: !input tag7_reader_booleans, rn: !input tag7_reader_numbers, text: !input tag7_text_storage, base: !input base_tag7, kwh: !input tag7_kwh_sensor, co2: !input tag7_co2_sensor, l: !input tag7_l_sensor }
+        - { label: "008", mc: !input mc_tag8_boolean, rb: !input tag8_reader_booleans, rn: !input tag8_reader_numbers, text: !input tag8_text_storage, base: !input base_tag8, kwh: !input tag8_kwh_sensor, co2: !input tag8_co2_sensor, l: !input tag8_l_sensor }
+        - { label: "009", mc: !input mc_tag9_boolean, rb: !input tag9_reader_booleans, rn: !input tag9_reader_numbers, text: !input tag9_text_storage, base: !input base_tag9, kwh: !input tag9_kwh_sensor, co2: !input tag9_co2_sensor, l: !input tag9_l_sensor }
+        - { label: "010", mc: !input mc_tag10_boolean, rb: !input tag10_reader_booleans, rn: !input tag10_reader_numbers, text: !input tag10_text_storage, base: !input base_tag10, kwh: !input tag10_kwh_sensor, co2: !input tag10_co2_sensor, l: !input tag10_l_sensor }
 
   - variables:
       this_tag: "{{ (tag_defs | selectattr('mc', 'eq', trigger.entity_id) | list | first) | default({}, true) }}"
@@ -542,7 +567,7 @@ action:
               topic: "homeassistant/sensor/{{ states(txt) }}/kwh_{{ sid }}/config"
               payload: >-
                 {
-                  "name": "05_Stromverbrauch Gesamt",
+                  "name": "11_Stromverbrauch Gesamt",
                   "state_topic": "homeassistant/sensor/{{ states(txt) }}/kwh_{{ sid }}/state",
                   "unit_of_measurement": "kWh",
                   "device_class": "energy",
@@ -558,14 +583,39 @@ action:
               payload: "{{ states(this_tag.kwh) }}"
               retain: true
 
-          # 4. CO2
+          # 4. Gesamt-Wasser (nur wenn ein Sensor hinterlegt ist)
+          - if: "{{ this_tag.l is string and this_tag.l }}"
+            then:
+              - delay: { seconds: 1 }
+              - action: mqtt.publish
+                data:
+                  topic: "homeassistant/sensor/{{ states(txt) }}/l_{{ sid }}/config"
+                  payload: >-
+                    {
+                      "name": "12_Wasserverbrauch Gesamt",
+                      "state_topic": "homeassistant/sensor/{{ states(txt) }}/l_{{ sid }}/state",
+                      "unit_of_measurement": "L",
+                      "device_class": "water",
+                      "state_class": "total",
+                      "unique_id": "{{ states(txt) }}_l_{{ sid }}",
+                      "device": { "identifiers": ["{{ states(txt) }}"] }
+                    }
+                  retain: true
+              - delay: { seconds: 1 }
+              - action: mqtt.publish
+                data:
+                  topic: "homeassistant/sensor/{{ states(txt) }}/l_{{ sid }}/state"
+                  payload: "{{ states(this_tag.l) }}"
+                  retain: true
+
+          # 5. CO2
           - delay: { seconds: 1 }
           - action: mqtt.publish
             data:
               topic: "homeassistant/sensor/{{ states(txt) }}/co2_{{ sid }}/config"
               payload: >-
                 {
-                  "name": "06_CO2 Äquivalent Gesamt",
+                  "name": "CO2 Äquivalent Gesamt",
                   "state_topic": "homeassistant/sensor/{{ states(txt) }}/co2_{{ sid }}/state",
                   "unit_of_measurement": "kg CO₂e",
                   "state_class": "total",
@@ -580,7 +630,7 @@ action:
               payload: "{{ states(this_tag.co2) }}"
               retain: true
 
-          # 5. ESPHome OUT + Display
+          # 6. ESPHome OUT + Display
           - sequence: !input esphome_out_action
 
           - action: input_text.set_value

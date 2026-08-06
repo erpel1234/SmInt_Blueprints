@@ -61,7 +61,7 @@ Vor dem 6. August 2026 hatte dieses Blueprint nur 3 Reader-Slots, was bei mehr R
 - `input_text.input_experiment_tagXXX` — Basis-Name, vom Dashboard befüllt, Ausgangspunkt für die Zufallsgenerierung.
 - `input_number.tr_k_0N_kwh_um_added_tagXXX` — aufaddierter kWh-Wert pro Reader+Karte seit letztem MC-Reset.
 - `sensor.tr_k_0N_kwh_um_tagXXX` — Utility Meter (Delta seit letzter Kalibrierung), Quelle für obigen Wert.
-- `sensor.final_kwh_tagXXX` / `sensor.final_co2_tagXXX` — Template-Sensoren, Summe aus TR-K-01 + TR-K-02 für die finale MC-Veröffentlichung.
+- `sensor.final_kwh_tagXXX` / `sensor.final_co2_tagXXX` / `sensor.final_l_tagXXX` — Template-Sensoren, Summe über alle Stations-Reader, für die finale MC-Veröffentlichung (Strom, CO2, Wasser).
 - `script.send_tagXXX_updates` — Flush-Script, publiziert vor dem MC-Reset den noch nicht abgeholten kWh-Wert per MQTT (nur wenn > 0).
 
 Für Karten 004-010 gilt dasselbe Schema mit `tag004` … `tag010`. Beim Anlegen der Helfer für eine neue Karte werden pro Karte gebraucht: 1× MC-Boolean, 1× Boolean je Stations-Reader, 1× `input_number` je Stations-Reader, 1× Utility Meter je Stations-Reader, 2× `input_text` (Experimentname + Basis-Name), 2× Template-Sensor (final kWh + CO2) und optional 1× Flush-Script.
@@ -82,6 +82,22 @@ Die folgenden Dateien wurden aus dem Arbeitsverzeichnis **gelöscht**, weil sie 
 **Zu v2:** Der frühere Testkandidat `tagreader_reader_session_handler_v2.yaml` (10 Karten + Zusatzsensor-Listen) ist jetzt der reguläre Reader Session Handler. Die Input-Schlüssel sind identisch geblieben, eine bestehende Test-Automation muss also nur in ihrem YAML auf den neuen Blueprint-Pfad zeigen (`use_blueprint: path:`), die konfigurierten Werte bleiben gültig.
 
 Bevor die alten Blueprints ganz verschwinden: **die zugehörigen Automationen in Home Assistant müssen deaktiviert bzw. gelöscht sein**, sonst laufen sie ins Leere.
+
+## MQTT-Namen der Gesamtwerte
+
+Beim MC-Checkout publiziert der Controller pro Karte die Session-Summen. Die Namen bestimmen die Sortierung im Dashboard, deshalb das Nummernpräfix:
+
+| MQTT-Name | Quelle (Input) | Topic-Suffix |
+|---|---|---|
+| `11_Stromverbrauch Gesamt` | `tagN_kwh_sensor` → `sensor.final_kwh_tagXXX` | `kwh_<station_id>` |
+| `12_Wasserverbrauch Gesamt` | `tagN_l_sensor` → `sensor.final_l_tagXXX` | `l_<station_id>` |
+| `CO2 Äquivalent Gesamt` | `tagN_co2_sensor` → `sensor.final_co2_tagXXX` | `co2_<station_id>` |
+
+Der Wasser-Sensor ist **optional**: bleibt `tagN_l_sensor` leer, wird der Block übersprungen und gar kein Wasser-Sensor angelegt. Strom und CO2 werden immer publiziert.
+
+Die Nummern 11/12 sind der historische Stand („wie früher"); 05/06 waren eine zwischenzeitliche Abweichung. Achtung beim Ändern: 05 ist im Reader Session Handler als `sensor_name` vergeben (`05_Stromverbrauch (Reader)`, der Pro-Station-Wert) — die Gesamtwerte dürfen damit nicht kollidieren.
+
+CO2 hat bewusst kein Nummernpräfix und sortiert dadurch hinter den nummerierten Einträgen.
 
 ## Bekannte, bereits gefixte Bugs
 
