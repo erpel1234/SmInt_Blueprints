@@ -32,12 +32,12 @@ flowchart TD
 
     subgraph MCC["MC Session Controller (1x global, MC-K-01)"]
         M -- ON --> N["① Flush-Script:<br/>alten kWh-Wert publizieren"]
-        N --> O["② r1/r2 kWh-Speicher<br/>auf 0 resetten"]
+        N --> O["② kWh-Speicher aller<br/>Stationen auf 0 resetten"]
         O --> P["③ neuen Zufallsnamen<br/>generieren"]
         P --> Q["④ MQTT start_time<br/>publizieren"]
         Q --> R[⑤ ESPHome IN]
 
-        M -- OFF --> T["① Reader-Booleans<br/>dieser Karte ausschalten"]
+        M -- OFF --> T["① Reader-Booleans aller<br/>Stationen ausschalten"]
         T --> T2["löst Reader Session Handler<br/>OFF-Zweig aus (s.o.)"]
         T2 --> Wait["② 1s warten"]
         Wait --> S["③ MQTT end_time/kwh/co2<br/>publizieren"]

@@ -10,7 +10,7 @@ Ablaufdiagramm: siehe [ablaufdiagramm.md](ablaufdiagramm.md).
 - **2 Stations-Reader** (TR-K-01, TR-K-02): wo die eigentliche Nutzung (z.B. Mikrowelle) gemessen wird.
 - **Karten-Slots**: 10 Karten, jede kann an jedem Reader gescannt werden. Karte 001 ist Pflicht, 002-010 optional.
 
-Für das aktuell im Aufbau befindliche Labor mit **5 Karten**: Karte 001-005 befüllen, 006-010 leer lassen.
+Der Aufbau oben beschreibt die ursprüngliche Installation. Die Blueprints sind nicht darauf festgelegt — das seit dem 6. August 2026 im Aufbau befindliche **Labor Z108/Z115** hat 5 Karten (301-305), einen MC-Reader und **sieben** Stations-Reader (TR-Z108-01…04, TR-Z115-01…03). Eine durchkonfigurierte Beispiel-Instanziierung dafür liegt in [beispiel_z108_z115_automations.yaml](beispiel_z108_z115_automations.yaml); die Karten-UIDs dort sind echt, die Reader-**Sensor**-Entities noch Platzhalter.
 
 ## Die Blueprints
 
@@ -34,9 +34,18 @@ Karte 001 ist Pflicht, 002-010 optional — nicht benötigte Slots einfach leer 
 
 ### Reader-Anzahl
 
-Der MC Session Controller kennt pro Karte genau zwei Stations-Reader (R1/R2). Der Reader Session Handler skaliert ohnehin, weil er pro Reader einmal instanziiert wird. Der **Hardware-Layer** hat drei Reader-Sensoren fest verdrahtet (MC, Reader 1, Reader 2), weil jeder Reader einen eigenen Trigger mit eigener Trigger-ID braucht.
+Der **MC Session Controller** kennt pro Karte zwei Mehrfachauswahl-Felder: `tagN_reader_booleans` (alle Stations-Booleans dieser Karte, werden beim Checkout ausgeschaltet) und `tagN_reader_numbers` (alle kWh-Speicher, werden beim Session-Start auf 0 gesetzt). Damit sind beliebig viele Stationen möglich, ohne das Blueprint anzufassen.
 
-Für einen dritten Stations-Reader wären also zwei Stellen anzufassen: im Hardware-Layer ein Trigger-Block plus ein `r3`-Schlüssel je Karte (alternativ eine zweite Automation aus demselben Blueprint, mit leerem MC/Reader 1), und im MC Controller ein drittes Boolean-/kWh-Feld je Karte.
+Beide Listen müssen **vollständig** sein — das ist die einzige Stelle, an der eine unvollständige Konfiguration stillschweigend falsche Messwerte erzeugt:
+
+- fehlt ein Reader in `tagN_reader_booleans`, bleibt sein Boolean nach Session-Ende auf `on` hängen und sein letzter Messwert fehlt in der Session (Bug 4 aus der Liste unten, nur über die Reader-Achse)
+- fehlt einer in `tagN_reader_numbers`, läuft sein alter kWh-Wert in die nächste Session weiter
+
+Die Template-Sensoren `sensor.final_kwh_tagXXX` / `sensor.final_co2_tagXXX` liegen außerhalb der Blueprints und müssen ebenfalls über alle Stationen summieren.
+
+Der **Reader Session Handler** skaliert ohnehin, weil er pro Reader einmal instanziiert wird.
+
+Der **Hardware-Layer** hat weiterhin genau drei Reader-Sensoren fest verdrahtet (MC, Reader 1, Reader 2), weil jeder Reader einen eigenen Trigger mit eigener Trigger-ID braucht und Trigger nicht aus einer Liste entstehen können. Bei mehr Readern legt man einfach mehrere Automationen aus demselben Blueprint an — drei Reader je Instanz, nicht benötigte Slots leer lassen. Der Preis: die Karten-UIDs sind in jeder Instanz zu pflegen und bei einem Kartentausch überall nachzuziehen.
 
 ## Wichtige Entity-Namenskonventionen
 
@@ -81,6 +90,7 @@ Bevor die alten Blueprints ganz verschwinden: **die zugehörigen Automationen in
 
 - Die 10-Karten-Blueprints sind statisch (YAML-Parsing, Template-Logik) verifiziert, aber **noch nicht in Home Assistant mit echter Hardware getestet**. Vor dem Rollout im neuen Labor: mit 1-2 Karten durchspielen, insbesondere den MC-OFF-Zweig (Reihenfolge Cleanup → kWh/CO2).
 - **Unbegrenzt viele Karten wurden bewusst nicht umgesetzt** (Entscheidung vom 6. August 2026). Eine Variante mit Freitext-Kartenliste + separater Trigger-Auswahl war gebaut und funktionsfähig, wurde aber zugunsten der einfacheren 10-Slot-Lösung wieder entfernt — Begründung siehe Abschnitt "Karten-Modell". Wiederherstellbar aus der Git-Historie, falls der Bedarf doch kommt.
-- Der Hardware-Layer unterstützt genau 3 Reader-Sensoren (MC + 2 Stationen), der MC Controller genau 2 Stations-Reader je Karte, siehe Abschnitt "Reader-Anzahl".
+- Der Hardware-Layer unterstützt genau 3 Reader-Sensoren pro Automation (MC + 2 Stationen), siehe Abschnitt "Reader-Anzahl". Für Z108/Z115 braucht es deshalb 4 Instanzen mit jeweils identischer UID-Liste — bisher der einzige Punkt, an dem dieselbe Information mehrfach gepflegt werden muss.
+- **UID-Format prüfen**: der Vergleich im Hardware-Layer ist exakt und case-sensitiv. Die Karten des neuen Labors haben das Format `13-CF-91-2A` (Bindestriche, Großbuchstaben), die ursprüngliche Installation `04A224B91C2A80` — also unterschiedliche Reader-Firmware. Bei Abweichung passiert schlicht nichts, ohne Fehlermeldung. Nach dem ersten Scan den State des Reader-Sensors ansehen und die Schreibweise angleichen.
 - `mode: parallel` läuft in beiden Session-Blueprints mit `max: 25` (vorher Default 10) — bei 10 Karten × 2 Readern reicht das.
 - Der Reader Session Handler ruft beim Auschecken pro Zusatzsensor ein `delay: 1s` auf. Bei vielen Zusatzsensoren summiert sich das; falls das stört, ließe sich das Publish-Muster bündeln.

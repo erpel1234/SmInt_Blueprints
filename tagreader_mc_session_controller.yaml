@@ -1,18 +1,18 @@
 blueprint:
-  name: "SmInt MC Session Controller (bis zu 10 Karten)"
+  name: "SmInt MC Session Controller (bis zu 10 Karten, beliebig viele Stations-Reader)"
   description: >
     Globale Session-Steuerung, 1x instanziieren.
 
     Bei MC-Boolean ON (Session-Start), garantierte Reihenfolge:
     1. Flush-Script (alten kWh-Wert vor dem Reset per MQTT publizieren)
-    2. R1/R2 kWh-Speicher auf 0 zurücksetzen
+    2. kWh-Speicher aller Stations-Reader dieser Karte auf 0 zurücksetzen
     3. Neuen Zufalls-Experimentnamen generieren
     4. MQTT Startzeit publizieren
     5. ESPHome IN
 
     Bei MC-Boolean OFF (Checkout), garantierte Reihenfolge:
-    1. R1/R2 Reader-Booleans aufräumen (triggert den Reader Session Handler,
-       der den letzten Messwert noch einträgt)
+    1. Reader-Booleans aller Stationen dieser Karte aufräumen (triggert den
+       Reader Session Handler, der den letzten Messwert noch einträgt)
     2. 1s warten
     3. MQTT Endzeit/kWh/CO2 publizieren
     4. ESPHome OUT
@@ -20,6 +20,12 @@ blueprint:
 
     KARTEN: 10 Karten-Slots. Karte 001 ist Pflicht, Karte 002-010 optional -
     einfach leer lassen, was nicht gebraucht wird.
+
+    STATIONS-READER: Pro Karte gibt es zwei Mehrfachauswahl-Felder - die
+    Reader-Booleans und die kWh-Speicher aller Stationen, an denen diese Karte
+    genutzt werden kann. Damit sind beliebig viele Stationen möglich. Wichtig:
+    beide Listen müssen vollständig sein, sonst bleiben beim Checkout Booleans
+    hängen bzw. laufen alte kWh-Werte in die nächste Session weiter.
   domain: automation
 
   input:
@@ -59,10 +65,23 @@ blueprint:
         mc_tag1_boolean:
           name: MC Tag 001 Boolean (Trigger)
           selector: { entity: { domain: input_boolean } }
-        r1_tag1_boolean: { name: "R1 - Tag 001 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag1_boolean: { name: "R2 - Tag 001 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag1_number: { name: "R1 - Tag 001 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag1_number: { name: "R2 - Tag 001 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag1_reader_booleans:
+          name: "Tag 001 - Reader-Booleans (alle Stationen)"
+          description: >
+            Alle Stations-Booleans dieser Karte, z.B.
+            input_boolean.tr_k_01_switch_tag001 und tr_k_02_switch_tag001.
+            Werden beim MC-Checkout ausgeschaltet - fehlt einer, bleibt er
+            hängen und sein letzter Messwert fehlt in der Session.
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } }
+        tag1_reader_numbers:
+          name: "Tag 001 - kWh-Speicher (alle Stationen)"
+          description: >
+            Alle input_number dieser Karte, z.B.
+            input_number.tr_k_01_kwh_um_added_tag001. Werden beim
+            Session-Start auf 0 gesetzt.
+          default: []
+          selector: { entity: { filter: [{ domain: input_number }], multiple: true } }
         tag1_text_storage:
           name: Tag 001 Experiment Name (input_text)
           selector: { entity: { domain: input_text } }
@@ -90,10 +109,14 @@ blueprint:
           name: MC Tag 002 Boolean (Trigger)
           default: []
           selector: { entity: { domain: input_boolean } }
-        r1_tag2_boolean: { name: "R1 - Tag 002 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag2_boolean: { name: "R2 - Tag 002 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag2_number: { name: "R1 - Tag 002 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag2_number: { name: "R2 - Tag 002 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag2_reader_booleans:
+          name: "Tag 002 - Reader-Booleans (alle Stationen)"
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } }
+        tag2_reader_numbers:
+          name: "Tag 002 - kWh-Speicher (alle Stationen)"
+          default: []
+          selector: { entity: { filter: [{ domain: input_number }], multiple: true } }
         tag2_text_storage:
           name: Tag 002 Experiment Name (input_text)
           default: []
@@ -125,10 +148,14 @@ blueprint:
           name: MC Tag 003 Boolean (Trigger)
           default: []
           selector: { entity: { domain: input_boolean } }
-        r1_tag3_boolean: { name: "R1 - Tag 003 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag3_boolean: { name: "R2 - Tag 003 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag3_number: { name: "R1 - Tag 003 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag3_number: { name: "R2 - Tag 003 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag3_reader_booleans:
+          name: "Tag 003 - Reader-Booleans (alle Stationen)"
+          default: []
+          selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } }
+        tag3_reader_numbers:
+          name: "Tag 003 - kWh-Speicher (alle Stationen)"
+          default: []
+          selector: { entity: { filter: [{ domain: input_number }], multiple: true } }
         tag3_text_storage:
           name: Tag 003 Experiment Name (input_text)
           default: []
@@ -157,10 +184,8 @@ blueprint:
       collapsed: true
       input:
         mc_tag4_boolean: { name: MC Tag 004 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag4_boolean: { name: "R1 - Tag 004 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag4_boolean: { name: "R2 - Tag 004 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag4_number: { name: "R1 - Tag 004 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag4_number: { name: "R2 - Tag 004 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag4_reader_booleans: { name: "Tag 004 - Reader-Booleans (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } } }
+        tag4_reader_numbers: { name: "Tag 004 - kWh-Speicher (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_number }], multiple: true } } }
         tag4_text_storage: { name: Tag 004 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         base_tag4: { name: Tag 004 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag4_kwh_sensor: { name: Tag 004 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
@@ -173,10 +198,8 @@ blueprint:
       collapsed: true
       input:
         mc_tag5_boolean: { name: MC Tag 005 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag5_boolean: { name: "R1 - Tag 005 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag5_boolean: { name: "R2 - Tag 005 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag5_number: { name: "R1 - Tag 005 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag5_number: { name: "R2 - Tag 005 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag5_reader_booleans: { name: "Tag 005 - Reader-Booleans (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } } }
+        tag5_reader_numbers: { name: "Tag 005 - kWh-Speicher (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_number }], multiple: true } } }
         tag5_text_storage: { name: Tag 005 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         base_tag5: { name: Tag 005 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag5_kwh_sensor: { name: Tag 005 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
@@ -189,10 +212,8 @@ blueprint:
       collapsed: true
       input:
         mc_tag6_boolean: { name: MC Tag 006 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag6_boolean: { name: "R1 - Tag 006 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag6_boolean: { name: "R2 - Tag 006 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag6_number: { name: "R1 - Tag 006 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag6_number: { name: "R2 - Tag 006 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag6_reader_booleans: { name: "Tag 006 - Reader-Booleans (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } } }
+        tag6_reader_numbers: { name: "Tag 006 - kWh-Speicher (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_number }], multiple: true } } }
         tag6_text_storage: { name: Tag 006 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         base_tag6: { name: Tag 006 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag6_kwh_sensor: { name: Tag 006 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
@@ -205,10 +226,8 @@ blueprint:
       collapsed: true
       input:
         mc_tag7_boolean: { name: MC Tag 007 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag7_boolean: { name: "R1 - Tag 007 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag7_boolean: { name: "R2 - Tag 007 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag7_number: { name: "R1 - Tag 007 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag7_number: { name: "R2 - Tag 007 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag7_reader_booleans: { name: "Tag 007 - Reader-Booleans (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } } }
+        tag7_reader_numbers: { name: "Tag 007 - kWh-Speicher (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_number }], multiple: true } } }
         tag7_text_storage: { name: Tag 007 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         base_tag7: { name: Tag 007 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag7_kwh_sensor: { name: Tag 007 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
@@ -221,10 +240,8 @@ blueprint:
       collapsed: true
       input:
         mc_tag8_boolean: { name: MC Tag 008 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag8_boolean: { name: "R1 - Tag 008 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag8_boolean: { name: "R2 - Tag 008 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag8_number: { name: "R1 - Tag 008 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag8_number: { name: "R2 - Tag 008 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag8_reader_booleans: { name: "Tag 008 - Reader-Booleans (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } } }
+        tag8_reader_numbers: { name: "Tag 008 - kWh-Speicher (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_number }], multiple: true } } }
         tag8_text_storage: { name: Tag 008 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         base_tag8: { name: Tag 008 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag8_kwh_sensor: { name: Tag 008 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
@@ -237,10 +254,8 @@ blueprint:
       collapsed: true
       input:
         mc_tag9_boolean: { name: MC Tag 009 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag9_boolean: { name: "R1 - Tag 009 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag9_boolean: { name: "R2 - Tag 009 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag9_number: { name: "R1 - Tag 009 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag9_number: { name: "R2 - Tag 009 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag9_reader_booleans: { name: "Tag 009 - Reader-Booleans (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } } }
+        tag9_reader_numbers: { name: "Tag 009 - kWh-Speicher (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_number }], multiple: true } } }
         tag9_text_storage: { name: Tag 009 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         base_tag9: { name: Tag 009 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag9_kwh_sensor: { name: Tag 009 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
@@ -253,10 +268,8 @@ blueprint:
       collapsed: true
       input:
         mc_tag10_boolean: { name: MC Tag 010 Boolean (Trigger), default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag10_boolean: { name: "R1 - Tag 010 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r2_tag10_boolean: { name: "R2 - Tag 010 Boolean", default: [], selector: { entity: { domain: input_boolean } } }
-        r1_tag10_number: { name: "R1 - Tag 010 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
-        r2_tag10_number: { name: "R2 - Tag 010 kWh Speicher", default: [], selector: { entity: { domain: input_number } } }
+        tag10_reader_booleans: { name: "Tag 010 - Reader-Booleans (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_boolean }], multiple: true } } }
+        tag10_reader_numbers: { name: "Tag 010 - kWh-Speicher (alle Stationen)", default: [], selector: { entity: { filter: [{ domain: input_number }], multiple: true } } }
         tag10_text_storage: { name: Tag 010 Experiment Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         base_tag10: { name: Tag 010 Basis-Name (input_text), default: [], selector: { entity: { domain: input_text } } }
         tag10_kwh_sensor: { name: Tag 010 Finaler kWh Sensor, default: [], selector: { entity: { domain: sensor } } }
@@ -372,16 +385,16 @@ action:
   - variables:
       sid: !input station_id
       tag_defs:
-        - { label: "001", mc: !input mc_tag1_boolean, r1b: !input r1_tag1_boolean, r2b: !input r2_tag1_boolean, r1n: !input r1_tag1_number, r2n: !input r2_tag1_number, text: !input tag1_text_storage, base: !input base_tag1, kwh: !input tag1_kwh_sensor, co2: !input tag1_co2_sensor }
-        - { label: "002", mc: !input mc_tag2_boolean, r1b: !input r1_tag2_boolean, r2b: !input r2_tag2_boolean, r1n: !input r1_tag2_number, r2n: !input r2_tag2_number, text: !input tag2_text_storage, base: !input base_tag2, kwh: !input tag2_kwh_sensor, co2: !input tag2_co2_sensor }
-        - { label: "003", mc: !input mc_tag3_boolean, r1b: !input r1_tag3_boolean, r2b: !input r2_tag3_boolean, r1n: !input r1_tag3_number, r2n: !input r2_tag3_number, text: !input tag3_text_storage, base: !input base_tag3, kwh: !input tag3_kwh_sensor, co2: !input tag3_co2_sensor }
-        - { label: "004", mc: !input mc_tag4_boolean, r1b: !input r1_tag4_boolean, r2b: !input r2_tag4_boolean, r1n: !input r1_tag4_number, r2n: !input r2_tag4_number, text: !input tag4_text_storage, base: !input base_tag4, kwh: !input tag4_kwh_sensor, co2: !input tag4_co2_sensor }
-        - { label: "005", mc: !input mc_tag5_boolean, r1b: !input r1_tag5_boolean, r2b: !input r2_tag5_boolean, r1n: !input r1_tag5_number, r2n: !input r2_tag5_number, text: !input tag5_text_storage, base: !input base_tag5, kwh: !input tag5_kwh_sensor, co2: !input tag5_co2_sensor }
-        - { label: "006", mc: !input mc_tag6_boolean, r1b: !input r1_tag6_boolean, r2b: !input r2_tag6_boolean, r1n: !input r1_tag6_number, r2n: !input r2_tag6_number, text: !input tag6_text_storage, base: !input base_tag6, kwh: !input tag6_kwh_sensor, co2: !input tag6_co2_sensor }
-        - { label: "007", mc: !input mc_tag7_boolean, r1b: !input r1_tag7_boolean, r2b: !input r2_tag7_boolean, r1n: !input r1_tag7_number, r2n: !input r2_tag7_number, text: !input tag7_text_storage, base: !input base_tag7, kwh: !input tag7_kwh_sensor, co2: !input tag7_co2_sensor }
-        - { label: "008", mc: !input mc_tag8_boolean, r1b: !input r1_tag8_boolean, r2b: !input r2_tag8_boolean, r1n: !input r1_tag8_number, r2n: !input r2_tag8_number, text: !input tag8_text_storage, base: !input base_tag8, kwh: !input tag8_kwh_sensor, co2: !input tag8_co2_sensor }
-        - { label: "009", mc: !input mc_tag9_boolean, r1b: !input r1_tag9_boolean, r2b: !input r2_tag9_boolean, r1n: !input r1_tag9_number, r2n: !input r2_tag9_number, text: !input tag9_text_storage, base: !input base_tag9, kwh: !input tag9_kwh_sensor, co2: !input tag9_co2_sensor }
-        - { label: "010", mc: !input mc_tag10_boolean, r1b: !input r1_tag10_boolean, r2b: !input r2_tag10_boolean, r1n: !input r1_tag10_number, r2n: !input r2_tag10_number, text: !input tag10_text_storage, base: !input base_tag10, kwh: !input tag10_kwh_sensor, co2: !input tag10_co2_sensor }
+        - { label: "001", mc: !input mc_tag1_boolean, rb: !input tag1_reader_booleans, rn: !input tag1_reader_numbers, text: !input tag1_text_storage, base: !input base_tag1, kwh: !input tag1_kwh_sensor, co2: !input tag1_co2_sensor }
+        - { label: "002", mc: !input mc_tag2_boolean, rb: !input tag2_reader_booleans, rn: !input tag2_reader_numbers, text: !input tag2_text_storage, base: !input base_tag2, kwh: !input tag2_kwh_sensor, co2: !input tag2_co2_sensor }
+        - { label: "003", mc: !input mc_tag3_boolean, rb: !input tag3_reader_booleans, rn: !input tag3_reader_numbers, text: !input tag3_text_storage, base: !input base_tag3, kwh: !input tag3_kwh_sensor, co2: !input tag3_co2_sensor }
+        - { label: "004", mc: !input mc_tag4_boolean, rb: !input tag4_reader_booleans, rn: !input tag4_reader_numbers, text: !input tag4_text_storage, base: !input base_tag4, kwh: !input tag4_kwh_sensor, co2: !input tag4_co2_sensor }
+        - { label: "005", mc: !input mc_tag5_boolean, rb: !input tag5_reader_booleans, rn: !input tag5_reader_numbers, text: !input tag5_text_storage, base: !input base_tag5, kwh: !input tag5_kwh_sensor, co2: !input tag5_co2_sensor }
+        - { label: "006", mc: !input mc_tag6_boolean, rb: !input tag6_reader_booleans, rn: !input tag6_reader_numbers, text: !input tag6_text_storage, base: !input base_tag6, kwh: !input tag6_kwh_sensor, co2: !input tag6_co2_sensor }
+        - { label: "007", mc: !input mc_tag7_boolean, rb: !input tag7_reader_booleans, rn: !input tag7_reader_numbers, text: !input tag7_text_storage, base: !input base_tag7, kwh: !input tag7_kwh_sensor, co2: !input tag7_co2_sensor }
+        - { label: "008", mc: !input mc_tag8_boolean, rb: !input tag8_reader_booleans, rn: !input tag8_reader_numbers, text: !input tag8_text_storage, base: !input base_tag8, kwh: !input tag8_kwh_sensor, co2: !input tag8_co2_sensor }
+        - { label: "009", mc: !input mc_tag9_boolean, rb: !input tag9_reader_booleans, rn: !input tag9_reader_numbers, text: !input tag9_text_storage, base: !input base_tag9, kwh: !input tag9_kwh_sensor, co2: !input tag9_co2_sensor }
+        - { label: "010", mc: !input mc_tag10_boolean, rb: !input tag10_reader_booleans, rn: !input tag10_reader_numbers, text: !input tag10_text_storage, base: !input base_tag10, kwh: !input tag10_kwh_sensor, co2: !input tag10_co2_sensor }
 
   - variables:
       this_tag: "{{ (tag_defs | selectattr('mc', 'eq', trigger.entity_id) | list | first) | default({}, true) }}"
@@ -392,9 +405,9 @@ action:
     value_template: "{{ this_tag | length > 0 }}"
 
   - variables:
-      # Nicht belegte Slots liefern [] statt einer Entity-ID und fallen hier raus.
-      r_booleans: "{{ [this_tag.r1b, this_tag.r2b] | select('string') | reject('eq', '') | list }}"
-      r_numbers: "{{ [this_tag.r1n, this_tag.r2n] | select('string') | reject('eq', '') | list }}"
+      # Mehrfachauswahl liefert bereits eine Liste, ein leeres Feld liefert [].
+      r_booleans: "{{ this_tag.rb | default([], true) | list }}"
+      r_numbers: "{{ this_tag.rn | default([], true) | list }}"
       txt: "{{ this_tag.text }}"
 
   - choose:
@@ -439,7 +452,7 @@ action:
                 sequence:
                   - sequence: !input tag10_flush_script
 
-          # 2. kWh-Speicher dieser Karte auf 0
+          # 2. kWh-Speicher aller Stationen dieser Karte auf 0
           - if: "{{ r_numbers | length > 0 }}"
             then:
               - action: input_number.set_value
@@ -493,8 +506,8 @@ action:
           - condition: trigger
             id: "OFF"
         sequence:
-          # 1. Reader-Booleans ausschalten (triggert den Reader Session Handler,
-          #    der den letzten Messwert noch aufaddiert)
+          # 1. Reader-Booleans aller Stationen ausschalten (triggert den Reader
+          #    Session Handler, der den letzten Messwert noch aufaddiert)
           - if: "{{ r_booleans | length > 0 }}"
             then:
               - action: input_boolean.turn_off

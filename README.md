@@ -62,7 +62,9 @@ Die Logik ist in drei Schichten aufgeteilt, jede Schicht ist ein eigenes Bluepri
    hinterlegen (Passthrough oder Meter-basiert, z. B. Argon- oder Gasverbrauch).
 
 3. **MC Session Controller** — [tagreader_mc_session_controller.yaml](tagreader_mc_session_controller.yaml)
-   Einmal global instanziiert. Triggert auf die MC-Booleans. Kapselt die
+   Einmal global instanziiert. Triggert auf die MC-Booleans. Pro Karte werden
+   die Booleans und kWh-Speicher **aller** Stations-Reader als Mehrfachauswahl
+   hinterlegt — die Anzahl der Stationen ist damit beliebig. Kapselt die
    Session-Lebenszyklus-Logik in **garantierter Reihenfolge** (früher waren das
    mehrere parallel laufende Automationen mit Race Conditions, siehe KONTEXT.md):
    *ON:* Flush-Script → Zähler-Reset → Zufallsnamen-Generierung → MQTT-Startzeit →
@@ -99,6 +101,7 @@ Zeile in `tag_defs`. Warum die Obergrenze trotzdem fest bei 10 liegt und nicht
 | [tagreader_inpput_boolean_1_1.yaml](tagreader_inpput_boolean_1_1.yaml) | Hardware-Layer: UID → `input_boolean.toggle` |
 | [tagreader_reader_session_handler.yaml](tagreader_reader_session_handler.yaml) | Pro-Reader-Logik (Check-in/Check-out an der Station, inkl. Zusatzsensoren) |
 | [tagreader_mc_session_controller.yaml](tagreader_mc_session_controller.yaml) | Globale Session-Steuerung (Start/Ende, Reihenfolge-Garantien) |
+| [beispiel_z108_z115_automations.yaml](beispiel_z108_z115_automations.yaml) | Beispiel-Instanziierung: Labor Z108/Z115 mit 5 Karten, 1 MC- und 7 Stations-Readern |
 
 Fünf ältere Blueprints sowie der frühere Testkandidat
 `tagreader_reader_session_handler_v2.yaml` wurden entfernt, weil sie in den drei
