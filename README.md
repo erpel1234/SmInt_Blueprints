@@ -42,10 +42,12 @@ Das MC-Display meldet "abgeschlossen".
 Die Logik ist in drei Schichten aufgeteilt, jede Schicht ist ein eigenes Blueprint:
 
 1. **Hardware-Layer** — [tagreader_inpput_boolean_1_1.yaml](tagreader_inpput_boolean_1_1.yaml)
-   Eine einzige Automation für alle 3 Reader. `state`-Trigger auf den drei
-   Reader-Sensoren; die gescannte UID wird in der Kartenliste nachgeschlagen und
-   das passende `input_boolean` getoggelt (z. B.
-   `input_boolean.tr_k_01_switch_tag001`). Die Booleans sind die einzige
+   Eine einzige Automation für die gesamte Anlage: MC-Reader plus bis zu 9
+   Stations-Reader. `state`-Trigger auf jedem Reader-Sensor; die gescannte UID
+   wird in der Kartenliste nachgeschlagen und das passende `input_boolean`
+   getoggelt (z. B. `input_boolean.tr_k_01_switch_tag001`). Die Trigger-ID des
+   auslösenden Readers ist dabei zugleich der Schlüssel im Karten-Eintrag, der
+   Lookup ist daher unabhängig von der Reader-Anzahl. Die Booleans sind die einzige
    Schnittstelle zu den nächsten Schichten — die Reader-Hardware ist damit
    vollständig entkoppelt. `mode: queued` verhindert verlorene Scans.
 
@@ -101,7 +103,6 @@ Zeile in `tag_defs`. Warum die Obergrenze trotzdem fest bei 10 liegt und nicht
 | [tagreader_inpput_boolean_1_1.yaml](tagreader_inpput_boolean_1_1.yaml) | Hardware-Layer: UID → `input_boolean.toggle` |
 | [tagreader_reader_session_handler.yaml](tagreader_reader_session_handler.yaml) | Pro-Reader-Logik (Check-in/Check-out an der Station, inkl. Zusatzsensoren) |
 | [tagreader_mc_session_controller.yaml](tagreader_mc_session_controller.yaml) | Globale Session-Steuerung (Start/Ende, Reihenfolge-Garantien) |
-| [beispiel_z108_z115_automations.yaml](beispiel_z108_z115_automations.yaml) | Beispiel-Instanziierung: Labor Z108/Z115 mit 5 Karten, 1 MC- und 7 Stations-Readern |
 
 Fünf ältere Blueprints sowie der frühere Testkandidat
 `tagreader_reader_session_handler_v2.yaml` wurden entfernt, weil sie in den drei
@@ -119,7 +120,7 @@ sich zurückholen lässt, steht in
    Utility Meter, Template-Sensoren) — Namensschema siehe
    [KONTEXT.md](KONTEXT.md#wichtige-entity-namenskonventionen).
 3. Automationen aus den Blueprints erstellen:
-   - 1× Hardware-Layer (alle 3 Reader in einer Automation)
+   - 1× Hardware-Layer (alle Reader in einer Automation)
    - 1× Reader Session Handler **pro Stations-Reader**
    - 1× MC Session Controller
 

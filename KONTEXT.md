@@ -10,7 +10,7 @@ Ablaufdiagramm: siehe [ablaufdiagramm.md](ablaufdiagramm.md).
 - **2 Stations-Reader** (TR-K-01, TR-K-02): wo die eigentliche Nutzung (z.B. Mikrowelle) gemessen wird.
 - **Karten-Slots**: 10 Karten, jede kann an jedem Reader gescannt werden. Karte 001 ist Pflicht, 002-010 optional.
 
-Der Aufbau oben beschreibt die ursprüngliche Installation. Die Blueprints sind nicht darauf festgelegt — das seit dem 6. August 2026 im Aufbau befindliche **Labor Z108/Z115** hat 5 Karten (301-305), einen MC-Reader und **sieben** Stations-Reader (TR-Z108-01…04, TR-Z115-01…03). Eine durchkonfigurierte Beispiel-Instanziierung dafür liegt in [beispiel_z108_z115_automations.yaml](beispiel_z108_z115_automations.yaml); die Karten-UIDs dort sind echt, die Reader-**Sensor**-Entities noch Platzhalter.
+Der Aufbau oben beschreibt die ursprüngliche Installation. Die Blueprints sind nicht darauf festgelegt — das seit dem 6. August 2026 im Aufbau befindliche **Labor Z108/Z115** hat 5 Karten (301-305), einen MC-Reader und **sieben** Stations-Reader (TR-Z108-01…04, TR-Z115-01…03). Die Instanziierung dafür erzeugt der Generator (`code_generator/app_v3.js`).
 
 ## Die Blueprints
 
@@ -18,7 +18,7 @@ Alle drei sind aktiv und produktiv. Es gibt seit dem 10-Karten-Umbau keine "in T
 
 | Datei | Zweck |
 |---|---|
-| [tagreader_inpput_boolean_1_1.yaml](tagreader_inpput_boolean_1_1.yaml) | Hardware-Layer. Liest UID vom jeweiligen Reader-Sensor, togglet das passende `input_boolean` (z.B. `r1_tag1_boolean`). 1 Automation für alle 3 Reader. |
+| [tagreader_inpput_boolean_1_1.yaml](tagreader_inpput_boolean_1_1.yaml) | Hardware-Layer. Liest UID vom jeweiligen Reader-Sensor, togglet das passende `input_boolean` (z.B. `r1_tag1_boolean`). 1 Automation für die gesamte Anlage: MC + bis zu 9 Stations-Reader × 10 Karten. |
 | [tagreader_reader_session_handler.yaml](tagreader_reader_session_handler.yaml) | Pro-Reader-Logik (1x für TR-K-01, 1x für TR-K-02 instanziiert). Bei Karten-Boolean ON: MC-Boolean einschalten falls aus, Utility Meter kalibrieren, MQTT-Discovery-Sensor publizieren, ESPHome IN. Bei OFF: Meter-Wert aufaddieren, MQTT-State publizieren, ESPHome OUT. Danach Display dieses Readers aktualisieren. Zusätzlich pro Karte ein freies Listenfeld für beliebig viele Zusatzsensoren (Passthrough oder Meter-basiert). |
 | [tagreader_mc_session_controller.yaml](tagreader_mc_session_controller.yaml) | Globale MC-Logik (1x instanziiert). Bei MC-Boolean ON: alten kWh-Wert flushen → R1/R2-Zähler resetten → neuen Zufallsnamen generieren → MQTT Startzeit → ESPHome IN. Bei OFF: Reader-Booleans aufräumen → MQTT Endzeit/kWh/CO2 → ESPHome OUT → Display "abgeschlossen". |
 
@@ -45,7 +45,13 @@ Die Template-Sensoren `sensor.final_kwh_tagXXX` / `sensor.final_co2_tagXXX` lieg
 
 Der **Reader Session Handler** skaliert ohnehin, weil er pro Reader einmal instanziiert wird.
 
-Der **Hardware-Layer** hat weiterhin genau drei Reader-Sensoren fest verdrahtet (MC, Reader 1, Reader 2), weil jeder Reader einen eigenen Trigger mit eigener Trigger-ID braucht und Trigger nicht aus einer Liste entstehen können. Bei mehr Readern legt man einfach mehrere Automationen aus demselben Blueprint an — drei Reader je Instanz, nicht benötigte Slots leer lassen. Der Preis: die Karten-UIDs sind in jeder Instanz zu pflegen und bei einem Kartentausch überall nachzuziehen.
+Der **Hardware-Layer** hat 10 Reader-Slots: `reader_mc` (Checkout) und `reader_1` … `reader_9` (Stationen). Jeder Slot braucht einen eigenen `state`-Trigger mit eigener Trigger-ID, weil Trigger nicht aus einer Liste entstehen können — deshalb feste Slots statt einer Mehrfachauswahl wie im MC Controller.
+
+Die Zuordnung ist eine Matrix: pro Karte je ein `input_boolean` pro Reader (`mc_tagN_boolean`, `r1_tagN_boolean` … `r9_tagN_boolean`), also 100 Felder plus 10 Sensoren plus 10 UIDs = 120 Inputs. Ausgefüllt wird nur, was existiert; ein leeres Feld heißt „diese Karte wird an diesem Reader nicht verwendet".
+
+Der Trick, der die Aktionslogik trotzdem kurz hält: die **Trigger-ID ist zugleich der Schlüssel im Karten-Dict**. `trigger.id` ist `mc`/`r1`…`r9`, und der Lookup ist ein einziges `hit[0].get(trigger.id, '')` — unabhängig davon, wie viele Reader-Slots es gibt.
+
+Vor dem 6. August 2026 hatte dieses Blueprint nur 3 Reader-Slots, was bei mehr Readern mehrere Instanzen mit jeweils identischer UID-Liste erzwang. Das war die einzige Stelle im System, an der dieselbe Information mehrfach zu pflegen war, und ist mit der Erweiterung auf 10 Slots weggefallen.
 
 ## Wichtige Entity-Namenskonventionen
 
@@ -90,7 +96,7 @@ Bevor die alten Blueprints ganz verschwinden: **die zugehörigen Automationen in
 
 - Die 10-Karten-Blueprints sind statisch (YAML-Parsing, Template-Logik) verifiziert, aber **noch nicht in Home Assistant mit echter Hardware getestet**. Vor dem Rollout im neuen Labor: mit 1-2 Karten durchspielen, insbesondere den MC-OFF-Zweig (Reihenfolge Cleanup → kWh/CO2).
 - **Unbegrenzt viele Karten wurden bewusst nicht umgesetzt** (Entscheidung vom 6. August 2026). Eine Variante mit Freitext-Kartenliste + separater Trigger-Auswahl war gebaut und funktionsfähig, wurde aber zugunsten der einfacheren 10-Slot-Lösung wieder entfernt — Begründung siehe Abschnitt "Karten-Modell". Wiederherstellbar aus der Git-Historie, falls der Bedarf doch kommt.
-- Der Hardware-Layer unterstützt genau 3 Reader-Sensoren pro Automation (MC + 2 Stationen), siehe Abschnitt "Reader-Anzahl". Für Z108/Z115 braucht es deshalb 4 Instanzen mit jeweils identischer UID-Liste — bisher der einzige Punkt, an dem dieselbe Information mehrfach gepflegt werden muss.
+- Der Hardware-Layer deckt MC + 9 Stations-Reader in **einer** Automation ab (Stand 6. August 2026, vorher 3). Für Z108/Z115 (MC + 7) reicht das; bei einem zehnten Stations-Reader müsste ein weiterer Slot ergänzt werden — das sind ein Sensor-Input, ein Trigger und eine Spalte in der Karten-Matrix.
 - **UID-Format prüfen**: der Vergleich im Hardware-Layer ist exakt und case-sensitiv. Die Karten des neuen Labors haben das Format `13-CF-91-2A` (Bindestriche, Großbuchstaben), die ursprüngliche Installation `04A224B91C2A80` — also unterschiedliche Reader-Firmware. Bei Abweichung passiert schlicht nichts, ohne Fehlermeldung. Nach dem ersten Scan den State des Reader-Sensors ansehen und die Schreibweise angleichen.
 - `mode: parallel` läuft in beiden Session-Blueprints mit `max: 25` (vorher Default 10) — bei 10 Karten × 2 Readern reicht das.
 - Der Reader Session Handler ruft beim Auschecken pro Zusatzsensor ein `delay: 1s` auf. Bei vielen Zusatzsensoren summiert sich das; falls das stört, ließe sich das Publish-Muster bündeln.

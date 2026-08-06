@@ -1,15 +1,22 @@
 blueprint:
-  name: "Tag Reader → Input Boolean Toggle (bis zu 10 Karten)"
+  name: "Tag Reader → Input Boolean Toggle (10 Reader × 10 Karten)"
   description: >
     Hardware-Layer: schaltet (toggle) das passende input_boolean, abhängig davon,
     welche Karten-UID an welchem Reader gescannt wurde.
 
-    Unterstützt 10 Karten-Slots. Karte 001 ist Pflicht, Karte 002-010 optional -
-    einfach leer lassen, was nicht gebraucht wird.
+    Eine einzige Automation für die gesamte Anlage: 1 Checkout-Reader (MC) plus
+    bis zu 9 Stations-Reader, jeweils mit bis zu 10 Karten. Karte 001 und der
+    MC-Reader sind Pflicht, alles andere ist optional - einfach leer lassen,
+    was nicht gebraucht wird.
+
+    Aufbau: pro Karte ein Abschnitt mit der UID und je einem input_boolean
+    pro Reader. Ein leer gelassenes Feld bedeutet schlicht "diese Karte wird
+    an diesem Reader nicht verwendet".
 
     Vorgehensweise:
-    1. Reader-Sensoren auswählen (MC, Reader 1, Reader 2).
-    2. Pro Karte die UID eintragen und die zugehörigen input_booleans zuordnen.
+    1. Im Abschnitt "Reader-Sensoren" die Sensoren aller Reader auswählen.
+    2. Pro Karte die UID eintragen und die input_booleans der Reader zuordnen,
+       an denen die Karte genutzt werden kann.
 
   domain: automation
 
@@ -22,8 +29,7 @@ blueprint:
         reader_mc:
           name: Tag Reader MC Sensor
           description: >
-            Sensor des MC-Readers (Master Checkout). Der Sensor muss beim Scannen
-            eines Tags als Zustand (State) die UID des Tags liefern.
+            Sensor des MC-Readers (Master Checkout). Der Sensor muss beim Scannen eines Tags als Zustand (State) die UID des Tags liefern.
           default: []
           selector:
             entity:
@@ -32,7 +38,8 @@ blueprint:
               multiple: false
         reader_1:
           name: Tag Reader 1 Sensor
-          description: Sensor des ersten Stations-Readers (z.B. TR-K-01).
+          description: >
+            Sensor des Stations-Readers 1 (optional).
           default: []
           selector:
             entity:
@@ -41,7 +48,78 @@ blueprint:
               multiple: false
         reader_2:
           name: Tag Reader 2 Sensor
-          description: Sensor des zweiten Stations-Readers (z.B. TR-K-02).
+          description: >
+            Sensor des Stations-Readers 2 (optional).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor]
+              multiple: false
+        reader_3:
+          name: Tag Reader 3 Sensor
+          description: >
+            Sensor des Stations-Readers 3 (optional).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor]
+              multiple: false
+        reader_4:
+          name: Tag Reader 4 Sensor
+          description: >
+            Sensor des Stations-Readers 4 (optional).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor]
+              multiple: false
+        reader_5:
+          name: Tag Reader 5 Sensor
+          description: >
+            Sensor des Stations-Readers 5 (optional).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor]
+              multiple: false
+        reader_6:
+          name: Tag Reader 6 Sensor
+          description: >
+            Sensor des Stations-Readers 6 (optional).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor]
+              multiple: false
+        reader_7:
+          name: Tag Reader 7 Sensor
+          description: >
+            Sensor des Stations-Readers 7 (optional).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor]
+              multiple: false
+        reader_8:
+          name: Tag Reader 8 Sensor
+          description: >
+            Sensor des Stations-Readers 8 (optional).
+          default: []
+          selector:
+            entity:
+              filter:
+                - domain: [sensor]
+              multiple: false
+        reader_9:
+          name: Tag Reader 9 Sensor
+          description: >
+            Sensor des Stations-Readers 9 (optional).
           default: []
           selector:
             entity:
@@ -59,22 +137,20 @@ blueprint:
           description: >
             Exakte UID der Karte, genau so wie sie der Reader-Sensor als State
             liefert (Groß-/Kleinschreibung beachten, keine Leerzeichen).
-            Beispiel: 04A224B91C2A80
+            Beispiele: 04A224B91C2A80 oder 13-CF-91-2A
           default:
           selector:
             text:
-        mc_tag1_boolean:
-          name: Reader MC → Tag 001 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
-        r1_tag1_boolean:
-          name: Reader 1 → Tag 001 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
-        r2_tag1_boolean:
-          name: Reader 2 → Tag 001 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
+        mc_tag1_boolean: { name: "Reader MC → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag1_boolean: { name: "Reader 1 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag1_boolean: { name: "Reader 2 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag1_boolean: { name: "Reader 3 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag1_boolean: { name: "Reader 4 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag1_boolean: { name: "Reader 5 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag1_boolean: { name: "Reader 6 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag1_boolean: { name: "Reader 7 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag1_boolean: { name: "Reader 8 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag1_boolean: { name: "Reader 9 → Tag 001 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte2_section:
       name: Karte 002 (optional)
@@ -86,18 +162,16 @@ blueprint:
           default:
           selector:
             text:
-        mc_tag2_boolean:
-          name: Reader MC → Tag 002 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
-        r1_tag2_boolean:
-          name: Reader 1 → Tag 002 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
-        r2_tag2_boolean:
-          name: Reader 2 → Tag 002 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
+        mc_tag2_boolean: { name: "Reader MC → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag2_boolean: { name: "Reader 1 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag2_boolean: { name: "Reader 2 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag2_boolean: { name: "Reader 3 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag2_boolean: { name: "Reader 4 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag2_boolean: { name: "Reader 5 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag2_boolean: { name: "Reader 6 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag2_boolean: { name: "Reader 7 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag2_boolean: { name: "Reader 8 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag2_boolean: { name: "Reader 9 → Tag 002 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte3_section:
       name: Karte 003 (optional)
@@ -109,88 +183,163 @@ blueprint:
           default:
           selector:
             text:
-        mc_tag3_boolean:
-          name: Reader MC → Tag 003 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
-        r1_tag3_boolean:
-          name: Reader 1 → Tag 003 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
-        r2_tag3_boolean:
-          name: Reader 2 → Tag 003 Boolean
-          default: []
-          selector: { entity: { filter: [{ domain: input_boolean }] } }
+        mc_tag3_boolean: { name: "Reader MC → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag3_boolean: { name: "Reader 1 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag3_boolean: { name: "Reader 2 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag3_boolean: { name: "Reader 3 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag3_boolean: { name: "Reader 4 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag3_boolean: { name: "Reader 5 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag3_boolean: { name: "Reader 6 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag3_boolean: { name: "Reader 7 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag3_boolean: { name: "Reader 8 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag3_boolean: { name: "Reader 9 → Tag 003 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte4_section:
       name: Karte 004 (optional)
       icon: mdi:card-account-details
       collapsed: true
       input:
-        tag_4_uid: { name: Tag 004 UID, default: , selector: { text: } }
-        mc_tag4_boolean: { name: Reader MC → Tag 004 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r1_tag4_boolean: { name: Reader 1 → Tag 004 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r2_tag4_boolean: { name: Reader 2 → Tag 004 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        tag_4_uid:
+          name: Tag 004 UID
+          default:
+          selector:
+            text:
+        mc_tag4_boolean: { name: "Reader MC → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag4_boolean: { name: "Reader 1 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag4_boolean: { name: "Reader 2 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag4_boolean: { name: "Reader 3 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag4_boolean: { name: "Reader 4 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag4_boolean: { name: "Reader 5 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag4_boolean: { name: "Reader 6 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag4_boolean: { name: "Reader 7 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag4_boolean: { name: "Reader 8 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag4_boolean: { name: "Reader 9 → Tag 004 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte5_section:
       name: Karte 005 (optional)
       icon: mdi:card-account-details
       collapsed: true
       input:
-        tag_5_uid: { name: Tag 005 UID, default: , selector: { text: } }
-        mc_tag5_boolean: { name: Reader MC → Tag 005 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r1_tag5_boolean: { name: Reader 1 → Tag 005 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r2_tag5_boolean: { name: Reader 2 → Tag 005 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        tag_5_uid:
+          name: Tag 005 UID
+          default:
+          selector:
+            text:
+        mc_tag5_boolean: { name: "Reader MC → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag5_boolean: { name: "Reader 1 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag5_boolean: { name: "Reader 2 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag5_boolean: { name: "Reader 3 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag5_boolean: { name: "Reader 4 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag5_boolean: { name: "Reader 5 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag5_boolean: { name: "Reader 6 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag5_boolean: { name: "Reader 7 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag5_boolean: { name: "Reader 8 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag5_boolean: { name: "Reader 9 → Tag 005 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte6_section:
       name: Karte 006 (optional)
       icon: mdi:card-account-details
       collapsed: true
       input:
-        tag_6_uid: { name: Tag 006 UID, default: , selector: { text: } }
-        mc_tag6_boolean: { name: Reader MC → Tag 006 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r1_tag6_boolean: { name: Reader 1 → Tag 006 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r2_tag6_boolean: { name: Reader 2 → Tag 006 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        tag_6_uid:
+          name: Tag 006 UID
+          default:
+          selector:
+            text:
+        mc_tag6_boolean: { name: "Reader MC → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag6_boolean: { name: "Reader 1 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag6_boolean: { name: "Reader 2 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag6_boolean: { name: "Reader 3 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag6_boolean: { name: "Reader 4 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag6_boolean: { name: "Reader 5 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag6_boolean: { name: "Reader 6 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag6_boolean: { name: "Reader 7 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag6_boolean: { name: "Reader 8 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag6_boolean: { name: "Reader 9 → Tag 006 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte7_section:
       name: Karte 007 (optional)
       icon: mdi:card-account-details
       collapsed: true
       input:
-        tag_7_uid: { name: Tag 007 UID, default: , selector: { text: } }
-        mc_tag7_boolean: { name: Reader MC → Tag 007 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r1_tag7_boolean: { name: Reader 1 → Tag 007 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r2_tag7_boolean: { name: Reader 2 → Tag 007 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        tag_7_uid:
+          name: Tag 007 UID
+          default:
+          selector:
+            text:
+        mc_tag7_boolean: { name: "Reader MC → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag7_boolean: { name: "Reader 1 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag7_boolean: { name: "Reader 2 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag7_boolean: { name: "Reader 3 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag7_boolean: { name: "Reader 4 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag7_boolean: { name: "Reader 5 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag7_boolean: { name: "Reader 6 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag7_boolean: { name: "Reader 7 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag7_boolean: { name: "Reader 8 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag7_boolean: { name: "Reader 9 → Tag 007 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte8_section:
       name: Karte 008 (optional)
       icon: mdi:card-account-details
       collapsed: true
       input:
-        tag_8_uid: { name: Tag 008 UID, default: , selector: { text: } }
-        mc_tag8_boolean: { name: Reader MC → Tag 008 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r1_tag8_boolean: { name: Reader 1 → Tag 008 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r2_tag8_boolean: { name: Reader 2 → Tag 008 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        tag_8_uid:
+          name: Tag 008 UID
+          default:
+          selector:
+            text:
+        mc_tag8_boolean: { name: "Reader MC → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag8_boolean: { name: "Reader 1 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag8_boolean: { name: "Reader 2 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag8_boolean: { name: "Reader 3 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag8_boolean: { name: "Reader 4 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag8_boolean: { name: "Reader 5 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag8_boolean: { name: "Reader 6 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag8_boolean: { name: "Reader 7 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag8_boolean: { name: "Reader 8 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag8_boolean: { name: "Reader 9 → Tag 008 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte9_section:
       name: Karte 009 (optional)
       icon: mdi:card-account-details
       collapsed: true
       input:
-        tag_9_uid: { name: Tag 009 UID, default: , selector: { text: } }
-        mc_tag9_boolean: { name: Reader MC → Tag 009 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r1_tag9_boolean: { name: Reader 1 → Tag 009 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r2_tag9_boolean: { name: Reader 2 → Tag 009 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        tag_9_uid:
+          name: Tag 009 UID
+          default:
+          selector:
+            text:
+        mc_tag9_boolean: { name: "Reader MC → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag9_boolean: { name: "Reader 1 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag9_boolean: { name: "Reader 2 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag9_boolean: { name: "Reader 3 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag9_boolean: { name: "Reader 4 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag9_boolean: { name: "Reader 5 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag9_boolean: { name: "Reader 6 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag9_boolean: { name: "Reader 7 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag9_boolean: { name: "Reader 8 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag9_boolean: { name: "Reader 9 → Tag 009 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
     karte10_section:
       name: Karte 010 (optional)
       icon: mdi:card-account-details
       collapsed: true
       input:
-        tag_10_uid: { name: Tag 010 UID, default: , selector: { text: } }
-        mc_tag10_boolean: { name: Reader MC → Tag 010 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r1_tag10_boolean: { name: Reader 1 → Tag 010 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
-        r2_tag10_boolean: { name: Reader 2 → Tag 010 Boolean, default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        tag_10_uid:
+          name: Tag 010 UID
+          default:
+          selector:
+            text:
+        mc_tag10_boolean: { name: "Reader MC → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r1_tag10_boolean: { name: "Reader 1 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r2_tag10_boolean: { name: "Reader 2 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r3_tag10_boolean: { name: "Reader 3 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r4_tag10_boolean: { name: "Reader 4 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r5_tag10_boolean: { name: "Reader 5 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r6_tag10_boolean: { name: "Reader 6 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r7_tag10_boolean: { name: "Reader 7 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r8_tag10_boolean: { name: "Reader 8 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
+        r9_tag10_boolean: { name: "Reader 9 → Tag 010 Boolean", default: [], selector: { entity: { filter: [{ domain: input_boolean }] } } }
 
 mode: queued
 max: 25
@@ -205,22 +354,43 @@ trigger:
   - platform: state
     entity_id: !input reader_2
     id: "r2"
+  - platform: state
+    entity_id: !input reader_3
+    id: "r3"
+  - platform: state
+    entity_id: !input reader_4
+    id: "r4"
+  - platform: state
+    entity_id: !input reader_5
+    id: "r5"
+  - platform: state
+    entity_id: !input reader_6
+    id: "r6"
+  - platform: state
+    entity_id: !input reader_7
+    id: "r7"
+  - platform: state
+    entity_id: !input reader_8
+    id: "r8"
+  - platform: state
+    entity_id: !input reader_9
+    id: "r9"
 
 condition: []
 
 action:
   - variables:
       cards:
-        - { uid: !input tag_1_uid,  mc: !input mc_tag1_boolean,  r1: !input r1_tag1_boolean,  r2: !input r2_tag1_boolean }
-        - { uid: !input tag_2_uid,  mc: !input mc_tag2_boolean,  r1: !input r1_tag2_boolean,  r2: !input r2_tag2_boolean }
-        - { uid: !input tag_3_uid,  mc: !input mc_tag3_boolean,  r1: !input r1_tag3_boolean,  r2: !input r2_tag3_boolean }
-        - { uid: !input tag_4_uid,  mc: !input mc_tag4_boolean,  r1: !input r1_tag4_boolean,  r2: !input r2_tag4_boolean }
-        - { uid: !input tag_5_uid,  mc: !input mc_tag5_boolean,  r1: !input r1_tag5_boolean,  r2: !input r2_tag5_boolean }
-        - { uid: !input tag_6_uid,  mc: !input mc_tag6_boolean,  r1: !input r1_tag6_boolean,  r2: !input r2_tag6_boolean }
-        - { uid: !input tag_7_uid,  mc: !input mc_tag7_boolean,  r1: !input r1_tag7_boolean,  r2: !input r2_tag7_boolean }
-        - { uid: !input tag_8_uid,  mc: !input mc_tag8_boolean,  r1: !input r1_tag8_boolean,  r2: !input r2_tag8_boolean }
-        - { uid: !input tag_9_uid,  mc: !input mc_tag9_boolean,  r1: !input r1_tag9_boolean,  r2: !input r2_tag9_boolean }
-        - { uid: !input tag_10_uid, mc: !input mc_tag10_boolean, r1: !input r1_tag10_boolean, r2: !input r2_tag10_boolean }
+        - { uid: !input tag_1_uid, mc: !input mc_tag1_boolean, r1: !input r1_tag1_boolean, r2: !input r2_tag1_boolean, r3: !input r3_tag1_boolean, r4: !input r4_tag1_boolean, r5: !input r5_tag1_boolean, r6: !input r6_tag1_boolean, r7: !input r7_tag1_boolean, r8: !input r8_tag1_boolean, r9: !input r9_tag1_boolean }
+        - { uid: !input tag_2_uid, mc: !input mc_tag2_boolean, r1: !input r1_tag2_boolean, r2: !input r2_tag2_boolean, r3: !input r3_tag2_boolean, r4: !input r4_tag2_boolean, r5: !input r5_tag2_boolean, r6: !input r6_tag2_boolean, r7: !input r7_tag2_boolean, r8: !input r8_tag2_boolean, r9: !input r9_tag2_boolean }
+        - { uid: !input tag_3_uid, mc: !input mc_tag3_boolean, r1: !input r1_tag3_boolean, r2: !input r2_tag3_boolean, r3: !input r3_tag3_boolean, r4: !input r4_tag3_boolean, r5: !input r5_tag3_boolean, r6: !input r6_tag3_boolean, r7: !input r7_tag3_boolean, r8: !input r8_tag3_boolean, r9: !input r9_tag3_boolean }
+        - { uid: !input tag_4_uid, mc: !input mc_tag4_boolean, r1: !input r1_tag4_boolean, r2: !input r2_tag4_boolean, r3: !input r3_tag4_boolean, r4: !input r4_tag4_boolean, r5: !input r5_tag4_boolean, r6: !input r6_tag4_boolean, r7: !input r7_tag4_boolean, r8: !input r8_tag4_boolean, r9: !input r9_tag4_boolean }
+        - { uid: !input tag_5_uid, mc: !input mc_tag5_boolean, r1: !input r1_tag5_boolean, r2: !input r2_tag5_boolean, r3: !input r3_tag5_boolean, r4: !input r4_tag5_boolean, r5: !input r5_tag5_boolean, r6: !input r6_tag5_boolean, r7: !input r7_tag5_boolean, r8: !input r8_tag5_boolean, r9: !input r9_tag5_boolean }
+        - { uid: !input tag_6_uid, mc: !input mc_tag6_boolean, r1: !input r1_tag6_boolean, r2: !input r2_tag6_boolean, r3: !input r3_tag6_boolean, r4: !input r4_tag6_boolean, r5: !input r5_tag6_boolean, r6: !input r6_tag6_boolean, r7: !input r7_tag6_boolean, r8: !input r8_tag6_boolean, r9: !input r9_tag6_boolean }
+        - { uid: !input tag_7_uid, mc: !input mc_tag7_boolean, r1: !input r1_tag7_boolean, r2: !input r2_tag7_boolean, r3: !input r3_tag7_boolean, r4: !input r4_tag7_boolean, r5: !input r5_tag7_boolean, r6: !input r6_tag7_boolean, r7: !input r7_tag7_boolean, r8: !input r8_tag7_boolean, r9: !input r9_tag7_boolean }
+        - { uid: !input tag_8_uid, mc: !input mc_tag8_boolean, r1: !input r1_tag8_boolean, r2: !input r2_tag8_boolean, r3: !input r3_tag8_boolean, r4: !input r4_tag8_boolean, r5: !input r5_tag8_boolean, r6: !input r6_tag8_boolean, r7: !input r7_tag8_boolean, r8: !input r8_tag8_boolean, r9: !input r9_tag8_boolean }
+        - { uid: !input tag_9_uid, mc: !input mc_tag9_boolean, r1: !input r1_tag9_boolean, r2: !input r2_tag9_boolean, r3: !input r3_tag9_boolean, r4: !input r4_tag9_boolean, r5: !input r5_tag9_boolean, r6: !input r6_tag9_boolean, r7: !input r7_tag9_boolean, r8: !input r8_tag9_boolean, r9: !input r9_tag9_boolean }
+        - { uid: !input tag_10_uid, mc: !input mc_tag10_boolean, r1: !input r1_tag10_boolean, r2: !input r2_tag10_boolean, r3: !input r3_tag10_boolean, r4: !input r4_tag10_boolean, r5: !input r5_tag10_boolean, r6: !input r6_tag10_boolean, r7: !input r7_tag10_boolean, r8: !input r8_tag10_boolean, r9: !input r9_tag10_boolean }
 
   - variables:
       scanned: "{{ trigger.to_state.state | default('', true) }}"
@@ -236,7 +406,7 @@ action:
     value_template: "{{ hit | length > 0 }}"
 
   - variables:
-      # trigger.id ist 'mc' / 'r1' / 'r2' und zugleich der Schlüssel im Karten-Dict
+      # trigger.id ist 'mc' / 'r1' ... 'r9' und zugleich der Schlüssel im Karten-Dict
       target_boolean: "{{ hit[0].get(trigger.id, '') }}"
 
   # Nicht konfigurierte Zuordnungen sind [] (leerer Entity-Selector) statt String -> überspringen
