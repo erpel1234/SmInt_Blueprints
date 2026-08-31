@@ -1,0 +1,19 @@
+# Betriebssystem
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Home-Assistant-Artefakte, die versehentlich hier landen können
+secrets.yaml
+*.db
+*.log
+home-assistant.log*
+
+# Lokale Notizen / Exporte
+scratch/
+*.local.md
